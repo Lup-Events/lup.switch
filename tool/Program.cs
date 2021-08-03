@@ -5,6 +5,7 @@ using Twilio;
 using Twilio.Rest.Supersim.V1;
 using OpenCvSharp;
 using OpenCvSharp.Extensions;
+using Twilio.TwiML.Voice;
 using ZXing;
 
 namespace Lup.TwilioSwitch
@@ -23,11 +24,12 @@ namespace Lup.TwilioSwitch
 
             var configRoot = builder.Build();
             var configuration = configRoot.Get<Configuration>();
-            
+
             // Start Twilio
             TwilioClient.Init(configuration.TwilioAccountSid, configuration.TwilioAuthToken);
 
 
+            var lastCode = String.Empty;
             var reader = new BarcodeReader();
             using var capture = new VideoCapture(0);
             using var image = new Mat();
@@ -38,7 +40,7 @@ namespace Lup.TwilioSwitch
                 {
                     break;
                 }
-                
+
                 capture.Read(image);
                 if (image.Empty())
                 {
@@ -49,9 +51,26 @@ namespace Lup.TwilioSwitch
 
                 using var b = BitmapConverter.ToBitmap(image);
                 var result = reader.Decode(b);
-                if (result != null)
+                if (result != null && result.Text != lastCode)
                 {
+                    var sim = GetSimByUniqueName(result.Text);
+
+                    switch (args[0])
+                    {
+                        case "activate":
+                            SimActivate(sim.Sid);
+                            Console.WriteLine($"{sim.UniqueName} activated.");
+                            break;
+                        case "deactivate":
+                            SimDeactivate(sim.Sid);
+                            Console.WriteLine($"{sim.UniqueName} deactivated.");
+                            break;
+                        default:
+                            throw new InvalidOperationException($"Unknown operation '{args[0]}'");
+                    }
+
                     Console.WriteLine(result);
+                    lastCode = result.Text;
                 }
             }
 
@@ -68,9 +87,14 @@ namespace Lup.TwilioSwitch
             Console.WriteLine("Done");
         }
 
-        private static void DeactivateSim(String uniqueName)
+        private static void SimDeactivate(String sid)
         {
-            
+            SimResource.Update(sid, null, SimResource.StatusUpdateEnum.Inactive, null, null, null, null);
+        }
+
+        private static void SimActivate(String sid)
+        {
+            SimResource.Update(sid, null, SimResource.StatusUpdateEnum.Active, null, null, null, null);
         }
 
         private static SimResource GetSimByUniqueName(String uniqueName)
@@ -79,7 +103,7 @@ namespace Lup.TwilioSwitch
             {
                 throw new ArgumentNullException(nameof(uniqueName));
             }
-            
+
             var sims = SimResource.Read();
             return sims.SingleOrDefault(a => a.UniqueName == uniqueName);
         }
