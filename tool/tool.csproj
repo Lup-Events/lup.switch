@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>netcoreapp3.1</TargetFramework>
+        <AssemblyName>Lup.TwilioSwitch</AssemblyName>
+        <RootNamespace>Lup.TwilioSwitch</RootNamespace>
+        <PackageId>Lup.TwilioSwitch</PackageId>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Microsoft.Extensions.Configuration" Version="5.0.0" />
+      <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="5.0.0" />
+      <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="5.0.0" />
+      <PackageReference Include="Microsoft.Extensions.Configuration.FileExtensions" Version="5.0.0" />
+      <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="5.0.0" />
+      <PackageReference Include="OpenCvSharp4" Version="4.5.3.20210725" />
+      <PackageReference Include="OpenCvSharp4.runtime.osx.10.15-x64" Version="4.5.3.20210725" />
+      <PackageReference Include="Twilio" Version="5.64.1" />
+      <PackageReference Include="ZXing.Net" Version="0.16.6" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="appsettings.local.json" />
+      <Content Include="appsettings.local.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+    </ItemGroup>
+
+</Project>
