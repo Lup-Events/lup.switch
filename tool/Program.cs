@@ -15,7 +15,7 @@ namespace Lup.TwilioSwitch
     {
         private const String ConfigurationFile = "config.json";
         private const Int32 GbelowCNote = 196; // Hz
-        private const Int32 FNote      = 349; // Hz
+        private const Int32 FNote = 349; // Hz
         private const Int32 FsharpNote = 370; // Hz
         private const Int32 NoteDuration = 500; // ms
 
@@ -37,13 +37,14 @@ namespace Lup.TwilioSwitch
             {
                 try
                 {
+                    Console.Write("Authenticating with Twilio... ");
                     TwilioClient.Init(configuration.TwilioAccountSid, configuration.TwilioAuthToken);
-                    Console.WriteLine("Authenticated with Twilio.");
+                    Console.WriteLine("Success.");
                     break;
                 }
                 catch (AuthenticationException ex)
                 {
-                    Console.WriteLine($"Twilio authentication failed. {ex.Message}.");
+                    Console.WriteLine($"failed. {ex.Message}.");
                     Console.WriteLine("What is your Twilio Account SID?");
                     configuration.TwilioAccountSid = Console.ReadLine();
                     if (String.IsNullOrEmpty(configuration.TwilioAccountSid))
@@ -61,6 +62,13 @@ namespace Lup.TwilioSwitch
                     configuration.Write(ConfigurationFile);
                 }
             }
+
+            // Load list of all SIMs
+            Console.Write("Loading list of SIMs... ");
+            var sims = SimResource.Read();
+            Console.WriteLine($"{sims.Count().ToString()} SIMs loaded.");
+            var a = sims.Single(a => a.UniqueName == "F8QRW01MF4YD");
+            
 
             // Start camera
             using var frame = new Mat();
@@ -101,10 +109,14 @@ namespace Lup.TwilioSwitch
                     case 97: // 'a'
                     case 65: // 'A'
                         mode = ModeType.Activate;
+                        lastCodes.Clear(); // Reset debounce
+                        Console.WriteLine("Now in activation mode.");
                         break;
                     case 100: // 'd'
                     case 68: // 'D'
                         mode = ModeType.Deactivate;
+                        lastCodes.Clear(); // Reset debounce
+                        Console.WriteLine("Now in deactivation mode.");
                         break;
                     case 120: // 'x'
                     case 88: // 'X'
@@ -159,11 +171,17 @@ namespace Lup.TwilioSwitch
                         SimResource sim;
                         try
                         {
-                            sim = GetSimByUniqueName(result.Text);
+                            sim = sims.SingleOrDefault(a => String.Compare(a.UniqueName, result.Text, true) == 0);
                         }
                         catch (InvalidOperationException)
                         {
-                            Console.Beep(GbelowCNote,NoteDuration);
+                            Console.WriteLine($"'{result.Text}' is ambiguous.");
+                            continue;
+                        }
+
+                        if (null == sim)
+                        {
+                            Console.WriteLine($"'{result.Text}' not found.");
                             continue;
                         }
 
@@ -172,14 +190,11 @@ namespace Lup.TwilioSwitch
                         {
                             case ModeType.Activate:
                                 SimActivate(sim.Sid);
-                                
-                                Console.Beep(FsharpNote, NoteDuration);
-                                Console.WriteLine($"{sim.UniqueName} activated.");
+                                Console.WriteLine($"'{sim.UniqueName}' activated.");
                                 break;
                             case ModeType.Deactivate:
                                 SimDeactivate(sim.Sid);
-                                Console.Beep(FNote, NoteDuration);
-                                Console.WriteLine($"{sim.UniqueName} deactivated.");
+                                Console.WriteLine($"'{sim.UniqueName}' deactivated.");
                                 break;
                         }
                     }
@@ -189,20 +204,6 @@ namespace Lup.TwilioSwitch
                 }
             }
 
-
-            /*
-            
-            var sims = SimResource.Read();
-            foreach (var sim in sims)
-            {
-                Console.WriteLine($"{sim.UniqueName} {sim.Status}");
-                
-            }
-            
-                 SoundPlayer player = new SoundPlayer();
-            player.SoundLocation =Application.StartupPath+ "\\Sound\\5756.wav";
-            player.Load ();
-*/
             Console.WriteLine("Done");
         }
 
@@ -214,17 +215,6 @@ namespace Lup.TwilioSwitch
         private static void SimActivate(String sid)
         {
             SimResource.Update(sid, null, SimResource.StatusUpdateEnum.Active, null, null, null, null);
-        }
-
-        private static SimResource GetSimByUniqueName(String uniqueName)
-        {
-            if (null == uniqueName)
-            {
-                throw new ArgumentNullException(nameof(uniqueName));
-            }
-
-            var sims = SimResource.Read();
-            return sims.Single(a => a.UniqueName == uniqueName);
         }
     }
 }
