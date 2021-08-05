@@ -22,7 +22,11 @@
 
     <ItemGroup>
       <None Remove="appsettings.local.json" />
-      <Content Include="appsettings.local.json">
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="config.json" />
+      <Content Include="config.json">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </Content>
     </ItemGroup>
