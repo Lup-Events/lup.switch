@@ -65,10 +65,8 @@ namespace Lup.TwilioSwitch
 
             // Load list of all SIMs
             Console.Write("Loading list of SIMs... ");
-            var sims = SimResource.Read();
+            var sims = SimResource.Read().ToList(); // Without ToList() it doesn't return all results
             Console.WriteLine($"{sims.Count().ToString()} SIMs loaded.");
-            var a = sims.Single(a => a.UniqueName == "F8QRW01MF4YD");
-            
 
             // Start camera
             using var frame = new Mat();
