@@ -2,23 +2,25 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using Lup.TwilioSwitch.Meraki;
 using Twilio;
 using Twilio.Rest.Supersim.V1;
 using OpenCvSharp;
 using OpenCvSharp.Extensions;
 using ZXing;
-using AuthenticationException = Twilio.Exceptions.AuthenticationException;
 
 namespace Lup.TwilioSwitch
 {
     class Program
     {
-        // TODO: Add beeps
         private const String ConfigurationFile = "config.json";
 
         static void Main(string[] args)
         {
+     
+            //var a = new SoundPlayer();
+            
             // Load configuration
             Status("Reading configuration... ");
             Configuration configuration;
@@ -201,13 +203,16 @@ namespace Lup.TwilioSwitch
                 switch (mode)
                 {
                     case ModeType.Activate:
-                        frame.PutText("Scan barcode to activate SIM.", new Point(10, 40), HersheyFonts.HersheyPlain, 2, Scalar.Green, 2, LineTypes.Link8, false);
+                        frame.PutText("Scan barcode to activate SIM.", new Point(10, 40), HersheyFonts.HersheyPlain, 2, Scalar.White, 10, LineTypes.Link8, false);
+                        frame.PutText("Scan barcode to activate SIM.", new Point(10, 40), HersheyFonts.HersheyPlain, 2, Scalar.DarkGreen, 2, LineTypes.Link8, false);
                         break;
                     case ModeType.Deactivate:
-                        frame.PutText("Scan barcode to deactivate SIM.", new Point(10, 40), HersheyFonts.HersheyPlain, 2, Scalar.Red, 2, LineTypes.Link8, false);
+                        frame.PutText("Scan barcode to deactivate SIM.", new Point(10, 40), HersheyFonts.HersheyPlain, 2, Scalar.White, 10, LineTypes.Link8, false);
+                        frame.PutText("Scan barcode to deactivate SIM.", new Point(10, 40), HersheyFonts.HersheyPlain, 2, Scalar.DarkRed, 2, LineTypes.Link8, false);
                         break;
                 }
-                frame.PutText("Press 'A' to activate scanned SIMs, 'D' to deactivate scanned SIMs, 'E' to enroll a device, 'X' to deactivate all SIMs or 'Q' to quit.", new Point(10, frame.Height - 10), HersheyFonts.HersheyPlain, 1, Scalar.Blue, 1, LineTypes.Link8, false);
+                frame.PutText("Press 'A' to activate SIMs, 'D' to deactivate SIMs, 'E' to enroll a device, 'X' to deactivate all SIMs or 'Q' to quit.", new Point(10, frame.Height - 10), HersheyFonts.HersheyPlain, 1, Scalar.White, 8, LineTypes.Link8, false);
+                frame.PutText("Press 'A' to activate SIMs, 'D' to deactivate SIMs, 'E' to enroll a device, 'X' to deactivate all SIMs or 'Q' to quit.", new Point(10, frame.Height - 10), HersheyFonts.HersheyPlain, 1, Scalar.Black, 1, LineTypes.Link8, false);
 
                 // Draw frame
                 window.ShowImage(frame);
@@ -254,10 +259,16 @@ namespace Lup.TwilioSwitch
                         case ModeType.Activate:
                             SimActivate(sim.Sid);
                             Success($"activated.\n");
+                            Console.Beep();
+                            Thread.Sleep(500);
                             break;
                         case ModeType.Deactivate:
                             SimDeactivate(sim.Sid);
                             Success($"deactivated.\n");
+                            Console.Beep();
+                            Thread.Sleep(200);
+                            Console.Beep();
+                            Thread.Sleep(500);
                             break;
                     }
                 }
