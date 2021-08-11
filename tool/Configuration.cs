@@ -8,6 +8,7 @@ namespace Lup.TwilioSwitch
     {
         public String TwilioAccountSid { get; set; }
         public String TwilioAuthToken { get; set; }
+        public String MerakiApiKey { get; set; }
         public Int32 CameraIndex { get; set; }
 
         public void Write(string file)

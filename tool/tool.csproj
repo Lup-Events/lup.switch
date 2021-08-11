@@ -2,10 +2,11 @@
 
     <PropertyGroup>
         <OutputType>Exe</OutputType>
-        <TargetFramework>netcoreapp3.1</TargetFramework>
+        <TargetFramework>net5.0</TargetFramework>
         <AssemblyName>Lup.TwilioSwitch</AssemblyName>
         <RootNamespace>Lup.TwilioSwitch</RootNamespace>
         <PackageId>Lup.TwilioSwitch</PackageId>
+        <LangVersion>9</LangVersion>
     </PropertyGroup>
 
     <ItemGroup>

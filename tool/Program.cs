@@ -2,12 +2,14 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
+using Lup.TwilioSwitch.Meraki;
 using Twilio;
 using Twilio.Rest.Supersim.V1;
 using OpenCvSharp;
 using OpenCvSharp.Extensions;
-using Twilio.Exceptions;
 using ZXing;
+using AuthenticationException = Twilio.Exceptions.AuthenticationException;
 
 namespace Lup.TwilioSwitch
 {
@@ -37,22 +39,22 @@ namespace Lup.TwilioSwitch
             {
                 try
                 {
-                    Console.Write("Authenticating with Twilio... ");
+                    Status("Authenticating with Twilio... ");
                     TwilioClient.Init(configuration.TwilioAccountSid, configuration.TwilioAuthToken);
-                    Console.WriteLine("Success.");
+                    Success("success.\n");
                     break;
                 }
                 catch (AuthenticationException ex)
                 {
-                    Console.WriteLine($"failed. {ex.Message}.");
-                    Console.WriteLine("What is your Twilio Account SID?");
+                    Error($"failed. {ex.Message}.\n");
+                    Input("What is your Twilio Account SID?\n");
                     configuration.TwilioAccountSid = Console.ReadLine();
                     if (String.IsNullOrEmpty(configuration.TwilioAccountSid))
                     {
                         return;
                     }
 
-                    Console.WriteLine("What is your Twilio Auth Token?");
+                    Input("What is your Twilio Auth Token?\n");
                     configuration.TwilioAuthToken = Console.ReadLine();
                     if (String.IsNullOrEmpty(configuration.TwilioAuthToken))
                     {
@@ -63,26 +65,67 @@ namespace Lup.TwilioSwitch
                 }
             }
 
+            // Start Meraki
+            MerakiClient meraki;
+            Organization org;
+            Network net;
+            while (true)
+            {
+                try
+                {
+                    Status("Authenticating with Meraki... ");
+                    if (null == configuration.MerakiApiKey)
+                    {
+                        throw new Meraki.AuthenticationException();
+                    }
+
+                    meraki = new MerakiClient(configuration.MerakiApiKey);
+
+                    var orgs = meraki.RequestCollection<Organization>("organizations");
+                    org = orgs.First();
+
+                    var nets = meraki.RequestCollection<Network>($"organizations/{org.id}/networks");
+                    net = nets.First();
+
+                    Success($"{org.name} > {net.name}\n");
+                    break;
+                }
+                catch (Meraki.AuthenticationException ex)
+                {
+                    Error($"failed. {ex.Message}.\n");
+                    Input("What is your Meraki API Key?\n");
+                    configuration.MerakiApiKey = Console.ReadLine();
+                    if (String.IsNullOrEmpty(configuration.MerakiApiKey))
+                    {
+                        return;
+                    }
+
+                    configuration.Write(ConfigurationFile);
+                }
+            }
+
             // Load list of all SIMs
-            Console.Write("Loading list of SIMs... ");
+            Status("Retrieving Twilio SIMs... ");
             var sims = SimResource.Read().ToList(); // Without ToList() it doesn't return all results
-            Console.WriteLine($"{sims.Count().ToString()} SIMs loaded.");
+            Success($"{sims.Count().ToString()} retrieved.\n");
 
             // Start camera
             using var frame = new Mat();
             VideoCapture camera;
             while (true)
             {
+                Status("Activating camera... ");
                 camera = new VideoCapture(configuration.CameraIndex);
                 if (camera.IsOpened() && camera.Read(frame))
                 {
-                    Console.WriteLine("Camera activated.");
+                    Success("success.\n");
                     break;
                 }
 
                 camera.Dispose();
+                Warning("camera not selected or not working.\n");
 
-                Console.WriteLine("Camera not selected or not working. What camera index would you like to use?");
+                Input("What camera index would you like to use?\n");
                 var v = Console.ReadLine();
                 if (String.IsNullOrEmpty(v) || !Int32.TryParse(v, out var cameraIndex))
                 {
@@ -93,11 +136,12 @@ namespace Lup.TwilioSwitch
                 configuration.Write(ConfigurationFile);
             }
 
-
             var mode = ModeType.Activate;
             var lastCodes = new List<string>();
             var reader = new BarcodeReader();
+            Status("Opening working window... ");
             using var window = new Window("Twilio Switch");
+            Success("done.\n");
             while (true)
             {
                 // Handle any key presses
@@ -108,13 +152,13 @@ namespace Lup.TwilioSwitch
                     case 65: // 'A'
                         mode = ModeType.Activate;
                         lastCodes.Clear(); // Reset debounce
-                        Console.WriteLine("Now in activation mode.");
+                        Status("Now in activation mode.\n");
                         break;
                     case 100: // 'd'
                     case 68: // 'D'
                         mode = ModeType.Deactivate;
                         lastCodes.Clear(); // Reset debounce
-                        Console.WriteLine("Now in deactivation mode.");
+                        Status("Now in deactivation mode.\n");
                         break;
                     case 120: // 'x'
                     case 88: // 'X'
@@ -126,7 +170,7 @@ namespace Lup.TwilioSwitch
                     case -1: // No key pressed
                         break;
                     default:
-                        Console.WriteLine($"Unexpected key '{key.ToString()}' pressed.");
+                        Status($"Unexpected key '{key.ToString()}' pressed.\n");
                         break;
                 }
 
@@ -147,7 +191,7 @@ namespace Lup.TwilioSwitch
                         break;
                 }
 
-                frame.PutText("Press 'A' to activate scanned SIMs, 'D' to deactivate scanned SIMs, 'X' to deactivate all SIMs or 'Q' to quit.", new Point(10, frame.Height - 10), HersheyFonts.HersheyPlain, 1, Scalar.Blue, 1, LineTypes.Link8, false);
+                frame.PutText("Press 'A' to activate scanned SIMs, 'D' to deactivate scanned SIMs, 'E' to enroll a device, 'X' to deactivate all SIMs or 'Q' to quit.", new Point(10, frame.Height - 10), HersheyFonts.HersheyPlain, 1, Scalar.Blue, 1, LineTypes.Link8, false);
 
                 // Draw frame
                 window.ShowImage(frame);
@@ -165,6 +209,7 @@ namespace Lup.TwilioSwitch
                             continue;
                         }
 
+                        Status($"Considering '{result.Text}'... ");
                         // Attempt to lookup SIMs
                         SimResource sim;
                         try
@@ -173,13 +218,13 @@ namespace Lup.TwilioSwitch
                         }
                         catch (InvalidOperationException)
                         {
-                            Console.WriteLine($"'{result.Text}' is ambiguous.");
+                            Warning($"ambiguous.\n");
                             continue;
                         }
 
                         if (null == sim)
                         {
-                            Console.WriteLine($"'{result.Text}' not found.");
+                            Warning($"not found.\n");
                             continue;
                         }
 
@@ -188,11 +233,11 @@ namespace Lup.TwilioSwitch
                         {
                             case ModeType.Activate:
                                 SimActivate(sim.Sid);
-                                Console.WriteLine($"'{sim.UniqueName}' activated.");
+                                Success($"activated.\n");
                                 break;
                             case ModeType.Deactivate:
                                 SimDeactivate(sim.Sid);
-                                Console.WriteLine($"'{sim.UniqueName}' deactivated.");
+                                Success($"deactivated.\n");
                                 break;
                         }
                     }
@@ -202,7 +247,7 @@ namespace Lup.TwilioSwitch
                 }
             }
 
-            Console.WriteLine("Done");
+            Success("Done.\n");
         }
 
         private static void SimDeactivate(String sid)
@@ -213,6 +258,44 @@ namespace Lup.TwilioSwitch
         private static void SimActivate(String sid)
         {
             SimResource.Update(sid, null, SimResource.StatusUpdateEnum.Active, null, null, null, null);
+        }
+
+
+        public static void Status(String message)
+        {
+            Console.ForegroundColor = ConsoleColor.Gray;
+            Console.Write(message);
+            Console.ForegroundColor = ConsoleColor.DarkRed;
+        }
+
+        public static void Input(String message)
+        {
+            Console.ForegroundColor = ConsoleColor.White;
+            Console.Write(message);
+        }
+
+        public static void Record(String message)
+        {
+            Console.ForegroundColor = ConsoleColor.DarkBlue;
+            Console.Write(message);
+        }
+
+        public static void Error(String message)
+        {
+            Console.ForegroundColor = ConsoleColor.DarkRed;
+            Console.Error.Write(message);
+        }
+
+        public static void Warning(String message)
+        {
+            Console.ForegroundColor = ConsoleColor.DarkYellow;
+            Console.Write(message);
+        }
+
+        public static void Success(String message)
+        {
+            Console.ForegroundColor = ConsoleColor.DarkGreen;
+            Console.Error.Write(message);
         }
     }
 }
