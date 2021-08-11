@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using Lup.TwilioSwitch.Meraki;
 using Twilio;
@@ -18,9 +19,6 @@ namespace Lup.TwilioSwitch
 
         static void Main(string[] args)
         {
-     
-            //var a = new SoundPlayer();
-            
             // Load configuration
             Status("Reading configuration... ");
             Configuration configuration;
@@ -142,7 +140,8 @@ namespace Lup.TwilioSwitch
             Success("success.\n");
 
             var mode = ModeType.Activate;
-            var lastCodes = new List<string>();
+            var lastBarcodes = new List<String>();
+            var status = "Looking for barcode...";
 
             Status("Opening working window... ");
             using var window = new Window("Twilio Switch");
@@ -157,7 +156,7 @@ namespace Lup.TwilioSwitch
                     case 97: // 'a'
                     case 65: // 'A'
                         mode = ModeType.Activate;
-                        lastCodes.Clear(); // Reset debounce
+                        lastBarcodes.Clear(); // Reset debounce
                         Status("Now in activation mode.\n");
                         break;
 
@@ -165,7 +164,7 @@ namespace Lup.TwilioSwitch
                     case 100: // 'd'
                     case 68: // 'D'
                         mode = ModeType.Deactivate;
-                        lastCodes.Clear(); // Reset debounce
+                        lastBarcodes.Clear(); // Reset debounce
                         Status("Now in deactivation mode.\n");
                         break;
 
@@ -203,43 +202,44 @@ namespace Lup.TwilioSwitch
                 switch (mode)
                 {
                     case ModeType.Activate:
-                        frame.PutText("Scan barcode to activate SIM.", new Point(10, 40), HersheyFonts.HersheyPlain, 2, Scalar.White, 10, LineTypes.Link8, false);
-                        frame.PutText("Scan barcode to activate SIM.", new Point(10, 40), HersheyFonts.HersheyPlain, 2, Scalar.DarkGreen, 2, LineTypes.Link8, false);
+                        frame.PutTextShadow("Activate SIM.", Scalar.DarkGreen, 10, 40, 2);
                         break;
                     case ModeType.Deactivate:
-                        frame.PutText("Scan barcode to deactivate SIM.", new Point(10, 40), HersheyFonts.HersheyPlain, 2, Scalar.White, 10, LineTypes.Link8, false);
-                        frame.PutText("Scan barcode to deactivate SIM.", new Point(10, 40), HersheyFonts.HersheyPlain, 2, Scalar.DarkRed, 2, LineTypes.Link8, false);
+                        frame.PutTextShadow("Deactivate SIM.", Scalar.DarkRed, 10, 40, 2);
                         break;
                 }
-                frame.PutText("Press 'A' to activate SIMs, 'D' to deactivate SIMs, 'E' to enroll a device, 'X' to deactivate all SIMs or 'Q' to quit.", new Point(10, frame.Height - 10), HersheyFonts.HersheyPlain, 1, Scalar.White, 8, LineTypes.Link8, false);
-                frame.PutText("Press 'A' to activate SIMs, 'D' to deactivate SIMs, 'E' to enroll a device, 'X' to deactivate all SIMs or 'Q' to quit.", new Point(10, frame.Height - 10), HersheyFonts.HersheyPlain, 1, Scalar.Black, 1, LineTypes.Link8, false);
+
+                frame.PutTextShadow(status, Scalar.Blue, 10, 80, 1);
+                frame.PutTextShadow("Press 'A' to activate SIMs, 'D' to deactivate SIMs, 'E' to enroll a device, 'X' to deactivate all SIMs or 'Q' to quit.", Scalar.Black, 10, frame.Height - 10, 1);
 
                 // Draw frame
                 window.ShowImage(frame);
 
                 // Read barcodes
                 using var b = BitmapConverter.ToBitmap(frame);
-                var results = reader.DecodeMultiple(b);
-                if (results == null) // If no barcodes detected
+                var barcodes = reader.DecodeMultiple(b)?.Select(a => a.Text).ToList();
+                if (barcodes == null) // If no barcodes detected
                 {
                     continue;
                 }
 
-                // Iterate through each barcode
-                foreach (var result in results)
+                // Debounce
+                if (lastBarcodes.Any(a => barcodes.Contains(a)))
                 {
-                    // Debounce
-                    if (lastCodes.Contains(result.Text))
-                    {
-                        continue;
-                    }
+                    continue;
+                }
 
-                    Status($"Considering '{result.Text}'... ");
+                var sb = new StringBuilder();
+
+                // Iterate through each barcode
+                foreach (var barcode in barcodes)
+                {
+                    Status($"Considering '{barcode}'... ");
                     // Attempt to lookup SIMs
                     SimResource sim;
                     try
                     {
-                        sim = sims.SingleOrDefault(a => String.Compare(a.UniqueName, result.Text, true) == 0);
+                        sim = sims.SingleOrDefault(a => String.Compare(a.UniqueName, barcode, true) == 0);
                     }
                     catch (InvalidOperationException)
                     {
@@ -259,12 +259,16 @@ namespace Lup.TwilioSwitch
                         case ModeType.Activate:
                             SimActivate(sim.Sid);
                             Success($"activated.\n");
+                            sb.Append($"{barcode} activated. ");
+
                             Console.Beep();
                             Thread.Sleep(500);
                             break;
                         case ModeType.Deactivate:
                             SimDeactivate(sim.Sid);
                             Success($"deactivated.\n");
+                            sb.Append($"{barcode} deactivated. ");
+
                             Console.Beep();
                             Thread.Sleep(200);
                             Console.Beep();
@@ -274,7 +278,8 @@ namespace Lup.TwilioSwitch
                 }
 
                 // Update debounce list
-                lastCodes = results.Select(a => a.Text).ToList();
+                lastBarcodes = barcodes;
+                status = sb.ToString();
             }
 
             Success("Done.\n");
@@ -289,7 +294,6 @@ namespace Lup.TwilioSwitch
         {
             SimResource.Update(sid, null, SimResource.StatusUpdateEnum.Active, null, null, null, null);
         }
-
 
         public static void Status(String message)
         {
