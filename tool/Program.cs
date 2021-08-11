@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 using Lup.TwilioSwitch.Meraki;
 using Twilio;
 using Twilio.Rest.Supersim.V1;
@@ -15,23 +14,23 @@ namespace Lup.TwilioSwitch
 {
     class Program
     {
+        // TODO: Add beeps
         private const String ConfigurationFile = "config.json";
-        private const Int32 GbelowCNote = 196; // Hz
-        private const Int32 FNote = 349; // Hz
-        private const Int32 FsharpNote = 370; // Hz
-        private const Int32 NoteDuration = 500; // ms
 
         static void Main(string[] args)
         {
             // Load configuration
+            Status("Reading configuration... ");
             Configuration configuration;
             try
             {
                 configuration = Configuration.Read(ConfigurationFile);
+                Success("success.\n");
             }
             catch (FileNotFoundException)
             {
                 configuration = new Configuration();
+                Warning("none found.\n");
             }
 
             // Start Twilio
@@ -136,9 +135,13 @@ namespace Lup.TwilioSwitch
                 configuration.Write(ConfigurationFile);
             }
 
+            Status("Starting barcode reader engine... ");
+            var reader = new BarcodeReader();
+            Success("success.\n");
+
             var mode = ModeType.Activate;
             var lastCodes = new List<string>();
-            var reader = new BarcodeReader();
+
             Status("Opening working window... ");
             using var window = new Window("Twilio Switch");
             Success("done.\n");
@@ -148,25 +151,39 @@ namespace Lup.TwilioSwitch
                 var key = Cv2.WaitKey(1000 / 10);
                 switch (key)
                 {
+                    // Activate
                     case 97: // 'a'
                     case 65: // 'A'
                         mode = ModeType.Activate;
                         lastCodes.Clear(); // Reset debounce
                         Status("Now in activation mode.\n");
                         break;
+
+                    // Deactivate
                     case 100: // 'd'
                     case 68: // 'D'
                         mode = ModeType.Deactivate;
                         lastCodes.Clear(); // Reset debounce
                         Status("Now in deactivation mode.\n");
                         break;
+
+                    // Enroll
+                    case 101: // 'e'
+                    case 69: // 'E'
+                        Error("Not implemented\n"); // TODO
+                        break;
+
+                    // Deactivate all
                     case 120: // 'x'
                     case 88: // 'X'
-                        throw new NotImplementedException();
+                        Error("Not implemented\n"); // TODO
                         break;
+
+                    // Quit
                     case 113: // 'q'
                     case 81: // 'Q'
                         return;
+
                     case -1: // No key pressed
                         break;
                     default:
@@ -190,7 +207,6 @@ namespace Lup.TwilioSwitch
                         frame.PutText("Scan barcode to deactivate SIM.", new Point(10, 40), HersheyFonts.HersheyPlain, 2, Scalar.Red, 2, LineTypes.Link8, false);
                         break;
                 }
-
                 frame.PutText("Press 'A' to activate scanned SIMs, 'D' to deactivate scanned SIMs, 'E' to enroll a device, 'X' to deactivate all SIMs or 'Q' to quit.", new Point(10, frame.Height - 10), HersheyFonts.HersheyPlain, 1, Scalar.Blue, 1, LineTypes.Link8, false);
 
                 // Draw frame
@@ -199,52 +215,55 @@ namespace Lup.TwilioSwitch
                 // Read barcodes
                 using var b = BitmapConverter.ToBitmap(frame);
                 var results = reader.DecodeMultiple(b);
-                if (results != null)
+                if (results == null) // If no barcodes detected
                 {
-                    foreach (var result in results)
+                    continue;
+                }
+
+                // Iterate through each barcode
+                foreach (var result in results)
+                {
+                    // Debounce
+                    if (lastCodes.Contains(result.Text))
                     {
-                        // Debounce
-                        if (lastCodes.Contains(result.Text))
-                        {
-                            continue;
-                        }
-
-                        Status($"Considering '{result.Text}'... ");
-                        // Attempt to lookup SIMs
-                        SimResource sim;
-                        try
-                        {
-                            sim = sims.SingleOrDefault(a => String.Compare(a.UniqueName, result.Text, true) == 0);
-                        }
-                        catch (InvalidOperationException)
-                        {
-                            Warning($"ambiguous.\n");
-                            continue;
-                        }
-
-                        if (null == sim)
-                        {
-                            Warning($"not found.\n");
-                            continue;
-                        }
-
-                        // Apply action
-                        switch (mode)
-                        {
-                            case ModeType.Activate:
-                                SimActivate(sim.Sid);
-                                Success($"activated.\n");
-                                break;
-                            case ModeType.Deactivate:
-                                SimDeactivate(sim.Sid);
-                                Success($"deactivated.\n");
-                                break;
-                        }
+                        continue;
                     }
 
-                    // Update debounce list
-                    lastCodes = results.Select(a => a.Text).ToList();
+                    Status($"Considering '{result.Text}'... ");
+                    // Attempt to lookup SIMs
+                    SimResource sim;
+                    try
+                    {
+                        sim = sims.SingleOrDefault(a => String.Compare(a.UniqueName, result.Text, true) == 0);
+                    }
+                    catch (InvalidOperationException)
+                    {
+                        Warning($"ambiguous.\n");
+                        continue;
+                    }
+
+                    if (null == sim)
+                    {
+                        Warning($"not found.\n");
+                        continue;
+                    }
+
+                    // Apply action
+                    switch (mode)
+                    {
+                        case ModeType.Activate:
+                            SimActivate(sim.Sid);
+                            Success($"activated.\n");
+                            break;
+                        case ModeType.Deactivate:
+                            SimDeactivate(sim.Sid);
+                            Success($"deactivated.\n");
+                            break;
+                    }
                 }
+
+                // Update debounce list
+                lastCodes = results.Select(a => a.Text).ToList();
             }
 
             Success("Done.\n");
