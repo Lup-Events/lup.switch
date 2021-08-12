@@ -17,137 +17,40 @@ namespace Lup.TwilioSwitch
     {
         private const String ConfigurationFile = "config.json";
 
+        private static Configuration Config;
+        private static MerakiClient Meraki;
+        private static String MerakiNetworkId;
+        private static ICollection<SimResource> TwilioSims;
+        private static VideoCapture Camera;
+
         static void Main(string[] args)
         {
             // Load configuration
-            Status("Reading configuration... ");
-            Configuration configuration;
-            try
-            {
-                configuration = Configuration.Read(ConfigurationFile);
-                Success("success.\n");
-            }
-            catch (FileNotFoundException)
-            {
-                configuration = new Configuration();
-                Warning("none found.\n");
-            }
+            LoadConfiguration();
 
             // Start Twilio
-            while (true)
-            {
-                try
-                {
-                    Status("Authenticating with Twilio... ");
-                    TwilioClient.Init(configuration.TwilioAccountSid, configuration.TwilioAuthToken);
-                    Success("success.\n");
-                    break;
-                }
-                catch (AuthenticationException ex)
-                {
-                    Error($"failed. {ex.Message}.\n");
-                    Input("What is your Twilio Account SID?\n");
-                    configuration.TwilioAccountSid = Console.ReadLine();
-                    if (String.IsNullOrEmpty(configuration.TwilioAccountSid))
-                    {
-                        return;
-                    }
-
-                    Input("What is your Twilio Auth Token?\n");
-                    configuration.TwilioAuthToken = Console.ReadLine();
-                    if (String.IsNullOrEmpty(configuration.TwilioAuthToken))
-                    {
-                        return;
-                    }
-
-                    configuration.Write(ConfigurationFile);
-                }
-            }
+            if (StartTwilio()) return;
 
             // Start Meraki
-            MerakiClient meraki;
-            Organization org;
-            Network net;
-            String enrollSim = null;
-            String enrollDevice = null;
-            while (true)
-            {
-                try
-                {
-                    Status("Authenticating with Meraki... ");
-                    if (null == configuration.MerakiApiKey)
-                    {
-                        throw new Meraki.AuthenticationException();
-                    }
-
-                    meraki = new MerakiClient(configuration.MerakiApiKey);
-
-                    var orgs = meraki.RequestCollection<Organization>("organizations");
-                    org = orgs.First();
-
-                    var nets = meraki.RequestCollection<Network>($"organizations/{org.id}/networks");
-                    net = nets.First();
-
-                    Success($"{org.name} > {net.name}\n");
-                    break;
-                }
-                catch (Meraki.AuthenticationException ex)
-                {
-                    Error($"failed. {ex.Message}.\n");
-                    Input("What is your Meraki API Key?\n");
-                    configuration.MerakiApiKey = Console.ReadLine();
-                    if (String.IsNullOrEmpty(configuration.MerakiApiKey))
-                    {
-                        return;
-                    }
-
-                    configuration.Write(ConfigurationFile);
-                }
-            }
+            if (StartMeraki()) return;
 
             // Load list of all SIMs
-            Status("Retrieving Twilio SIMs... ");
-            var sims = SimResource.Read().ToList(); // Without ToList() it doesn't return all results
-            Success($"{sims.Count().ToString()} retrieved.\n");
+            FetchTwilioSims();
 
             // Start camera
-            using var frame = new Mat();
-            VideoCapture camera;
-            while (true)
-            {
-                Status("Activating camera... ");
-                camera = new VideoCapture(configuration.CameraIndex);
-                if (camera.IsOpened() && camera.Read(frame))
-                {
-                    Success("success.\n");
-                    break;
-                }
+            if (StartCamera()) return;
 
-                camera.Dispose();
-                Warning("camera not selected or not working.\n");
-
-                Input("What camera index would you like to use?\n");
-                var v = Console.ReadLine();
-                if (String.IsNullOrEmpty(v) || !Int32.TryParse(v, out var cameraIndex))
-                {
-                    return;
-                }
-
-                configuration.CameraIndex = cameraIndex;
-                configuration.Write(ConfigurationFile);
-            }
-
-            Status("Starting barcode reader engine... ");
-            var reader = new BarcodeReader();
-            Success("success.\n");
-
+            var barcodeReader = new BarcodeReader();
             var mode = ModeType.Activate;
             var lastBarcodes = new List<String>();
             var status = "Looking for barcode...";
+            var frame = new Mat();
+            String enrollSim = null;
+            String enrollDevice = null;
 
-            Status("Opening working window... ");
+            WriteConsoleStatus("Opening working window... ");
             using var window = new Window("Twilio Switch");
-            Success("done.\n");
+            WriteConsoleSuccess("done.\n");
             while (true)
             {
                 // Handle any key presses
@@ -159,7 +62,7 @@ namespace Lup.TwilioSwitch
                     case 65: // 'A'
                         mode = ModeType.Activate;
                         lastBarcodes.Clear(); // Reset debounce
-                        Status("Now in activation mode.\n");
+                        WriteConsoleStatus("Now in activation mode.\n");
                         break;
 
                     // Deactivate
@@ -167,21 +70,21 @@ namespace Lup.TwilioSwitch
                     case 68: // 'D'
                         mode = ModeType.Deactivate;
                         lastBarcodes.Clear(); // Reset debounce
-                        Status("Now in deactivation mode.\n");
+                        WriteConsoleStatus("Now in deactivation mode.\n");
                         break;
 
                     // Enroll
                     case 101: // 'e'
                     case 69: // 'E'
                         mode = ModeType.Enroll;
-                        Status("Now in enroll mode.\n");
+                        WriteConsoleStatus("Now in enroll mode.\n");
                         break;
 
                     // Deactivate all
                     case 120: // 'x'
                     case 88: // 'X'
                         mode = ModeType.DeactivateAll;
-                        Status("Now in deactivate-all mode.\n");
+                        WriteConsoleStatus("Now in deactivate-all mode.\n");
                         status = "WARNING this will cause all SIMs to cease working immediately. Press ENTER to continue.";
                         break;
                     case 13: // ENTER
@@ -201,12 +104,12 @@ namespace Lup.TwilioSwitch
                     case -1: // No key pressed
                         break;
                     default:
-                        Status($"Unexpected key '{key.ToString()}' pressed.\n");
+                        WriteConsoleStatus($"Unexpected key '{key.ToString()}' pressed.\n");
                         break;
                 }
 
                 // Read frame and shortcut loop if no frame read
-                if (!camera.Read(frame) || frame.Empty())
+                if (!Camera.Read(frame) || frame.Empty())
                 {
                     break;
                 }
@@ -236,7 +139,7 @@ namespace Lup.TwilioSwitch
 
                 // Read barcodes
                 using var b = BitmapConverter.ToBitmap(frame);
-                var barcodes = reader.DecodeMultiple(b)?.Select(a => a.Text).ToList();
+                var barcodes = barcodeReader.DecodeMultiple(b)?.Select(a => a.Text).ToList();
                 if (barcodes == null) // If no barcodes detected
                 {
                     continue;
@@ -256,21 +159,21 @@ namespace Lup.TwilioSwitch
                     SimResource sim = null;
                     if (mode == ModeType.Activate || mode == ModeType.Deactivate)
                     {
-                        Status($"Considering '{barcode}'... ");
+                        WriteConsoleStatus($"Considering '{barcode}'... ");
                         // Attempt to lookup SIMs
                         try
                         {
-                            sim = sims.SingleOrDefault(a => String.Compare(a.UniqueName, barcode, true) == 0);
+                            sim = TwilioSims.SingleOrDefault(a => String.Compare(a.UniqueName, barcode, true) == 0);
                         }
                         catch (InvalidOperationException)
                         {
-                            Warning($"ambiguous.\n");
+                            WriteConsoleWarning($"ambiguous.\n");
                             continue;
                         }
 
                         if (null == sim)
                         {
-                            Warning($"not found.\n");
+                            WriteConsoleWarning($"not found.\n");
                             continue;
                         }
                     }
@@ -279,16 +182,16 @@ namespace Lup.TwilioSwitch
                     switch (mode)
                     {
                         case ModeType.Activate:
-                            SimActivate(sim.Sid);
-                            Success($"activated.\n");
+                            ActivateTwilioSim(sim.Sid);
+                            WriteConsoleSuccess($"activated.\n");
                             sb.Append($"{barcode} activated. ");
 
                             Console.Beep();
                             Thread.Sleep(500);
                             break;
                         case ModeType.Deactivate:
-                            SimDeactivate(sim.Sid);
-                            Success($"deactivated.\n");
+                            DeactivateTwilioSim(sim.Sid);
+                            WriteConsoleSuccess($"deactivated.\n");
                             sb.Append($"{barcode} deactivated. ");
 
                             Console.Beep();
@@ -336,51 +239,173 @@ namespace Lup.TwilioSwitch
                 status = sb.ToString();
             }
 
-            Success("Done.\n");
+            WriteConsoleSuccess("Done.\n");
         }
 
-        private static void SimDeactivate(String sid)
+        private static bool StartCamera()
+        {
+            while (true)
+            {
+                using var frame = new Mat();
+                WriteConsoleStatus("Activating camera... ");
+                Camera = new VideoCapture(Config.CameraIndex);
+                if (Camera.IsOpened() && Camera.Read(frame))
+                {
+                    WriteConsoleSuccess("success.\n");
+                    break;
+                }
+
+                Camera.Dispose();
+                WriteConsoleWarning("camera not selected or not working.\n");
+
+                WriteConsoleInput("What camera index would you like to use?\n");
+                var v = Console.ReadLine();
+                if (String.IsNullOrEmpty(v) || !Int32.TryParse(v, out var cameraIndex))
+                {
+                    return true;
+                }
+
+                Config.CameraIndex = cameraIndex;
+                Config.Write(ConfigurationFile);
+            }
+
+            return false;
+        }
+
+        private static void FetchTwilioSims()
+        {
+            WriteConsoleStatus("Retrieving Twilio SIMs... ");
+            TwilioSims = SimResource.Read().ToList(); // Without ToList() it doesn't return all results
+            WriteConsoleSuccess($"{TwilioSims.Count().ToString()} retrieved.\n");
+        }
+
+        private static bool StartMeraki()
+        {
+            while (true)
+            {
+                try
+                {
+                    WriteConsoleStatus("Authenticating with Meraki... ");
+                    if (null == Config.MerakiApiKey)
+                    {
+                        throw new Meraki.AuthenticationException();
+                    }
+
+                    Meraki = new MerakiClient(Config.MerakiApiKey);
+
+                    var orgs = Meraki.RequestCollection<Organization>("organizations");
+                    var org = orgs.First();
+
+                    var nets = Meraki.RequestCollection<Network>($"organizations/{org.id}/networks");
+                    var net = nets.First();
+                    MerakiNetworkId = net.id;
+
+                    WriteConsoleSuccess($"{org.name} > {net.name}\n");
+                    break;
+                }
+                catch (Meraki.AuthenticationException ex)
+                {
+                    WriteConsoleError($"failed. {ex.Message}.\n");
+                    WriteConsoleInput("What is your Meraki API Key?\n");
+                    Config.MerakiApiKey = Console.ReadLine();
+                    if (String.IsNullOrEmpty(Config.MerakiApiKey))
+                    {
+                        return true;
+                    }
+
+                    Config.Write(ConfigurationFile);
+                }
+            }
+
+            return false;
+        }
+
+        private static bool StartTwilio()
+        {
+            while (true)
+            {
+                try
+                {
+                    WriteConsoleStatus("Authenticating with Twilio... ");
+                    TwilioClient.Init(Config.TwilioAccountSid, Config.TwilioAuthToken);
+                    WriteConsoleSuccess("success.\n");
+                    break;
+                }
+                catch (AuthenticationException ex)
+                {
+                    WriteConsoleError($"failed. {ex.Message}.\n");
+                    WriteConsoleInput("What is your Twilio Account SID?\n");
+                    Config.TwilioAccountSid = Console.ReadLine();
+                    if (String.IsNullOrEmpty(Config.TwilioAccountSid))
+                    {
+                        return true;
+                    }
+
+                    WriteConsoleInput("What is your Twilio Auth Token?\n");
+                    Config.TwilioAuthToken = Console.ReadLine();
+                    if (String.IsNullOrEmpty(Config.TwilioAuthToken))
+                    {
+                        return true;
+                    }
+
+                    Config.Write(ConfigurationFile);
+                }
+            }
+
+            return false;
+        }
+
+        private static void LoadConfiguration()
+        {
+            WriteConsoleStatus("Reading configuration... ");
+            try
+            {
+                Config = Configuration.Read(ConfigurationFile);
+                WriteConsoleSuccess("success.\n");
+            }
+            catch (FileNotFoundException)
+            {
+                Config = new Configuration();
+                WriteConsoleWarning("none found.\n");
+            }
+        }
+
+        private static void DeactivateTwilioSim(String sid)
         {
             SimResource.Update(sid, null, SimResource.StatusUpdateEnum.Inactive, null, null, null, null);
         }
 
-        private static void SimActivate(String sid)
+        private static void ActivateTwilioSim(String sid)
         {
             SimResource.Update(sid, null, SimResource.StatusUpdateEnum.Active, null, null, null, null);
         }
 
-        public static void Status(String message)
+        public static void WriteConsoleStatus(String message)
         {
             Console.ForegroundColor = ConsoleColor.Gray;
             Console.Write(message);
             Console.ForegroundColor = ConsoleColor.DarkRed;
         }
 
-        public static void Input(String message)
+        public static void WriteConsoleInput(String message)
         {
             Console.ForegroundColor = ConsoleColor.White;
             Console.Write(message);
         }
 
-        public static void Record(String message)
-        {
-            Console.ForegroundColor = ConsoleColor.DarkBlue;
-            Console.Write(message);
-        }
-
-        public static void Error(String message)
+        public static void WriteConsoleError(String message)
         {
             Console.ForegroundColor = ConsoleColor.DarkRed;
             Console.Error.Write(message);
         }
 
-        public static void Warning(String message)
+        public static void WriteConsoleWarning(String message)
         {
             Console.ForegroundColor = ConsoleColor.DarkYellow;
             Console.Write(message);
         }
 
-        public static void Success(String message)
+        public static void WriteConsoleSuccess(String message)
         {
             Console.ForegroundColor = ConsoleColor.DarkGreen;
             Console.Error.Write(message);
