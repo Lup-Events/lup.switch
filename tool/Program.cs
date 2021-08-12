@@ -68,6 +68,8 @@ namespace Lup.TwilioSwitch
             MerakiClient meraki;
             Organization org;
             Network net;
+            String enrollSim = null;
+            String enrollDevice = null;
             while (true)
             {
                 try
@@ -171,13 +173,24 @@ namespace Lup.TwilioSwitch
                     // Enroll
                     case 101: // 'e'
                     case 69: // 'E'
-                        Error("Not implemented\n"); // TODO
+                        mode = ModeType.Enroll;
+                        Status("Now in enroll mode.\n");
                         break;
 
                     // Deactivate all
                     case 120: // 'x'
                     case 88: // 'X'
-                        Error("Not implemented\n"); // TODO
+                        mode = ModeType.DeactivateAll;
+                        Status("Now in deactivate-all mode.\n");
+                        status = "WARNING this will cause all SIMs to cease working immediately. Press ENTER to continue.";
+                        break;
+                    case 13: // ENTER
+                        if (mode == ModeType.DeactivateAll)
+                        {
+                            status = "All SIMs deactivated.";
+                            // TODO
+                        }
+
                         break;
 
                     // Quit
@@ -207,6 +220,12 @@ namespace Lup.TwilioSwitch
                     case ModeType.Deactivate:
                         frame.PutTextShadow("Deactivate SIM.", Scalar.DarkRed, 10, 40, 2);
                         break;
+                    case ModeType.Enroll:
+                        frame.PutTextShadow("Enroll device with SIM.", Scalar.Chocolate, 10, 40, 2);
+                        break;
+                    case ModeType.DeactivateAll:
+                        frame.PutTextShadow("Deactivate all.", Scalar.Red, 10, 40, 2);
+                        break;
                 }
 
                 frame.PutTextShadow(status, Scalar.Blue, 10, 80, 1);
@@ -234,23 +253,26 @@ namespace Lup.TwilioSwitch
                 // Iterate through each barcode
                 foreach (var barcode in barcodes)
                 {
-                    Status($"Considering '{barcode}'... ");
-                    // Attempt to lookup SIMs
-                    SimResource sim;
-                    try
+                    SimResource sim = null;
+                    if (mode == ModeType.Activate || mode == ModeType.Deactivate)
                     {
-                        sim = sims.SingleOrDefault(a => String.Compare(a.UniqueName, barcode, true) == 0);
-                    }
-                    catch (InvalidOperationException)
-                    {
-                        Warning($"ambiguous.\n");
-                        continue;
-                    }
+                        Status($"Considering '{barcode}'... ");
+                        // Attempt to lookup SIMs
+                        try
+                        {
+                            sim = sims.SingleOrDefault(a => String.Compare(a.UniqueName, barcode, true) == 0);
+                        }
+                        catch (InvalidOperationException)
+                        {
+                            Warning($"ambiguous.\n");
+                            continue;
+                        }
 
-                    if (null == sim)
-                    {
-                        Warning($"not found.\n");
-                        continue;
+                        if (null == sim)
+                        {
+                            Warning($"not found.\n");
+                            continue;
+                        }
                     }
 
                     // Apply action
@@ -273,6 +295,38 @@ namespace Lup.TwilioSwitch
                             Thread.Sleep(200);
                             Console.Beep();
                             Thread.Sleep(500);
+                            break;
+                        case ModeType.Enroll:
+                            if (barcode.Length == 12) // Apple serial
+                            {
+                                enrollDevice = barcode;
+                            }
+                            else if (barcode.Length == 20 && barcode.StartsWith("8988307")) // Twilio SuperSIM
+                            {
+                                enrollSim = barcode;
+                            }
+                            else
+                            {
+                                sb.Append($"Unknown barcode '{barcode}'. ");
+                                continue;
+                            }
+
+                            if (enrollDevice == null)
+                            {
+                                sb.Append($"Matched SIM {enrollSim}, looking for device...");
+                            }
+                            else if (enrollSim == null)
+                            {
+                                sb.Append($"Matched device {enrollDevice}, looking for SIM...");
+                            }
+                            else
+                            {
+                                // TODO
+                                sb.Append($"Enrolled {enrollDevice} > {enrollSim}");
+                                enrollDevice = null;
+                                enrollSim = null;
+                            }
+
                             break;
                     }
                 }
