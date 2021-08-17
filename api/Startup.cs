@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -25,8 +26,22 @@ namespace Lup.Switch
 
         // This method gets called by the runtime. Use this method to add services to the container
         public void ConfigureServices(IServiceCollection services)
-        {
+        {/*
+            services.AddAuthentication(options =>
+                {
+                    options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                })
+                .AddCookie(options =>
+                {
+                    options.LoginPath = "/account/google-login"; // Must be lowercase
+                })
+                .AddGoogle(options =>
+                {
+                    options.ClientId = "1066....";
+                    options.ClientSecret = "Bm....";
+                }*/
             services.AddControllers();
+                
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline
@@ -38,6 +53,8 @@ namespace Lup.Switch
             }
 
             app.UseHttpsRedirection();
+            app.UseDefaultFiles();
+            app.UseStaticFiles();
 
             app.UseRouting();
 
@@ -46,10 +63,11 @@ namespace Lup.Switch
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
+                /*
                 endpoints.MapGet("/", async context =>
                 {
                     await context.Response.WriteAsync("Welcome to running ASP.NET Core on AWS Lambda");
-                });
+                });*/
             });
         }
     }
