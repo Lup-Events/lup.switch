@@ -31,4 +31,8 @@
       <PackageReference Include="Twilio" Version="5.65.0" />
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\common\common.csproj" />
+    </ItemGroup>
+
 </Project>

@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net5.0</TargetFramework>
+        <AssemblyName>Lup.Switch.Scratch</AssemblyName>
+        <RootNamespace>Lup.Switch</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <Content Include="config.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Twilio" Version="5.65.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\common\common.csproj" />
+    </ItemGroup>
+
+</Project>
