@@ -11,6 +11,8 @@ namespace Lup.TwilioSwitch.Meraki
     // See https://developer.cisco.com/meraki/api-v1/
     // Modify tags: https://developer.cisco.com/meraki/api-v1/#!modify-network-sm-devices-tags
     // Checkin: https://developer.cisco.com/meraki/api-v1/#!checkin-network-sm-devices
+    
+    
     public class MerakiClient : IDisposable
     {
         private const String BaseUri = "https://api.meraki.com/api/v1/";

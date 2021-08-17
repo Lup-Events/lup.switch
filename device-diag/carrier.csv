@@ -1,0 +1,7 @@
+Carrier,ICCID Prefix,Approved,Configuration Profile
+Twilio SuperSIM,8988307,TRUE,TwilioSuperSIM
+Twilio Wireless,8901260,FALSE,
+Optus,896102,FALSE,
+Vodafone Australia,896103,FALSE,
+Vodafone New Zealand,896401,FALSE,
+Telstra,896101,FALSE,

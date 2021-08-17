@@ -1,6 +1,10 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "tool", "tool\tool.csproj", "{BEB63EB4-6EBE-4B4B-9899-D14DA7B20E42}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "initial-scratch", "initial-scratch\initial-scratch.csproj", "{BEB63EB4-6EBE-4B4B-9899-D14DA7B20E42}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "common", "common\common.csproj", "{45A512B4-6463-4B03-A58B-3F0EF957A397}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "device-diag", "device-diag\device-diag.csproj", "{75EF90C7-9710-4F38-A946-33EF827A848F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -12,5 +16,13 @@ Global
 		{BEB63EB4-6EBE-4B4B-9899-D14DA7B20E42}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BEB63EB4-6EBE-4B4B-9899-D14DA7B20E42}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BEB63EB4-6EBE-4B4B-9899-D14DA7B20E42}.Release|Any CPU.Build.0 = Release|Any CPU
+		{45A512B4-6463-4B03-A58B-3F0EF957A397}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{45A512B4-6463-4B03-A58B-3F0EF957A397}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{45A512B4-6463-4B03-A58B-3F0EF957A397}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{45A512B4-6463-4B03-A58B-3F0EF957A397}.Release|Any CPU.Build.0 = Release|Any CPU
+		{75EF90C7-9710-4F38-A946-33EF827A848F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{75EF90C7-9710-4F38-A946-33EF827A848F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{75EF90C7-9710-4F38-A946-33EF827A848F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{75EF90C7-9710-4F38-A946-33EF827A848F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
