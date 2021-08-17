@@ -3,11 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -24,9 +26,10 @@ namespace Lup.Switch
 
         public static IConfiguration Configuration { get; private set; }
 
-        // This method gets called by the runtime. Use this method to add services to the container
         public void ConfigureServices(IServiceCollection services)
-        {/*
+        {
+            //services.AddRazorPages();
+
             services.AddAuthentication(options =>
                 {
                     options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
@@ -37,14 +40,30 @@ namespace Lup.Switch
                 })
                 .AddGoogle(options =>
                 {
-                    options.ClientId = "1066....";
-                    options.ClientSecret = "Bm....";
-                }*/
+                    options.ClientId = Environment.GetEnvironmentVariable("Switch_Google_ClientId");
+                    options.ClientSecret = Environment.GetEnvironmentVariable("Switch_Google_ClientSecret");
+                });
+            
+            // Require authentication by default
+            services.AddMvc(o =>
+            {
+                var policy = new AuthorizationPolicyBuilder()
+                    .RequireAuthenticatedUser()
+                    .Build();
+                o.Filters.Add(new AuthorizeFilter(policy));
+            });
+            
+            // Static files require authentication
+            services.AddAuthorization(options =>
+            {
+                options.FallbackPolicy = new AuthorizationPolicyBuilder()
+                    .RequireAuthenticatedUser()
+                    .Build();
+            });
+            
             services.AddControllers();
-                
         }
 
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
@@ -54,14 +73,19 @@ namespace Lup.Switch
 
             app.UseHttpsRedirection();
             app.UseDefaultFiles();
-            app.UseStaticFiles();
 
             app.UseRouting();
 
+            
+            app.UseAuthentication(); // Added with GAuth
             app.UseAuthorization();
 
+            
+            app.UseStaticFiles();
+            
             app.UseEndpoints(endpoints =>
             {
+                //endpoints.MapRazorPages();
                 endpoints.MapControllers();
                 /*
                 endpoints.MapGet("/", async context =>
