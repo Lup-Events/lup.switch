@@ -1,7 +1,10 @@
 using Amazon.Lambda.Core;
 using Amazon.Lambda.RuntimeSupport;
 using Amazon.Lambda.Serialization.SystemTextJson;
+using Amazon.Lambda.APIGatewayEvents;
 using System;
+using System.Collections.Generic;
+using System.Net;
 using System.Threading.Tasks;
 
 // This project specifies the serializer used to convert Lambda event into .NET classes in the project's main 
@@ -20,13 +23,13 @@ namespace Lup.Switch
         private static async Task Main(string[] args)
         {
             Func<string, ILambdaContext, string> func = FunctionHandler;
-            using(var handlerWrapper = HandlerWrapper.GetHandlerWrapper(func, new DefaultLambdaJsonSerializer()))
+            using(var handlerWrapper = HandlerWrapper.GetHandlerWrapper(FunctionHandler, new DefaultLambdaJsonSerializer()))
             using(var bootstrap = new LambdaBootstrap(handlerWrapper))
             {
                 await bootstrap.RunAsync();
             }
         }
-
+        
         /// <summary>
         /// A simple function that takes a string and does a ToUpper
         ///
@@ -37,9 +40,19 @@ namespace Lup.Switch
         /// <param name="input"></param>
         /// <param name="context"></param>
         /// <returns></returns>
-        public static string FunctionHandler(string input, ILambdaContext context)
+        public static APIGatewayProxyResponse FunctionHandler(APIGatewayProxyRequest request, ILambdaContext context)
         {
-            return input?.ToUpper();
+
+            return new APIGatewayProxyResponse
+            {
+                StatusCode = (Int32)HttpStatusCode.OK,
+                Body = ".",
+                Headers = new Dictionary<string, string>
+                { 
+                    { "Content-Type", "application/json" }, 
+                    { "Access-Control-Allow-Origin", "*" } 
+                }
+            };
         }
     }
 }

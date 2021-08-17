@@ -1,23 +1,50 @@
-# AWS Lambda Custom Runtime Function Project
+# ASP.NET Core Web API Serverless Application
 
-This starter project consists of:
-* Function.cs - contains a class with a Main method that starts the bootstrap, and a single function handler method
+This project shows how to run an ASP.NET Core Web API project as an AWS Lambda exposed through Amazon API Gateway. The NuGet package [Amazon.Lambda.AspNetCoreServer](https://www.nuget.org/packages/Amazon.Lambda.AspNetCoreServer) contains a Lambda function that is used to translate requests from API Gateway into the ASP.NET Core framework and then the responses from ASP.NET Core back to API Gateway.
+
+
+For more information about how the Amazon.Lambda.AspNetCoreServer package works and how to extend its behavior view its [README](https://github.com/aws/aws-lambda-dotnet/blob/master/Libraries/src/Amazon.Lambda.AspNetCoreServer/README.md) file in GitHub.
+
+
+### Configuring for API Gateway HTTP API ###
+
+API Gateway supports the original REST API and the new HTTP API. In addition HTTP API supports 2 different
+payload formats. When using the 2.0 format the base class of `LambdaEntryPoint` must be `Amazon.Lambda.AspNetCoreServer.APIGatewayHttpApiV2ProxyFunction`.
+For the 1.0 payload format the base class is the same as REST API which is `Amazon.Lambda.AspNetCoreServer.APIGatewayProxyFunction`.
+**Note:** when using the `AWS::Serverless::Function` CloudFormation resource with an event type of `HttpApi` the default payload
+format is 2.0 so the base class of `LambdaEntryPoint` must be `Amazon.Lambda.AspNetCoreServer.APIGatewayHttpApiV2ProxyFunction`.
+
+
+### Configuring for Application Load Balancer ###
+
+To configure this project to handle requests from an Application Load Balancer instead of API Gateway change
+the base class of `LambdaEntryPoint` from `Amazon.Lambda.AspNetCoreServer.APIGatewayProxyFunction` to 
+`Amazon.Lambda.AspNetCoreServer.ApplicationLoadBalancerFunction`.
+
+### Project Files ###
+
+* serverless.template - an AWS CloudFormation Serverless Application Model template file for declaring your Serverless functions and other AWS resources
 * aws-lambda-tools-defaults.json - default argument settings for use with Visual Studio and command line deployment tools for AWS
+* LambdaEntryPoint.cs - class that derives from **Amazon.Lambda.AspNetCoreServer.APIGatewayProxyFunction**. The code in 
+this file bootstraps the ASP.NET Core hosting framework. The Lambda function is defined in the base class.
+Change the base class to **Amazon.Lambda.AspNetCoreServer.ApplicationLoadBalancerFunction** when using an 
+Application Load Balancer.
+* LocalEntryPoint.cs - for local development this contains the executable Main function which bootstraps the ASP.NET Core hosting framework with Kestrel, as for typical ASP.NET Core applications.
+* Startup.cs - usual ASP.NET Core Startup class used to configure the services ASP.NET Core will use.
+* web.config - used for local development.
+* Controllers\ValuesController - example Web API controller
 
 You may also have a test project depending on the options selected.
 
-The generated Main method is the entry point for the function's process.  The main method wraps the function handler in a wrapper that the bootstrap can work with.  Then it instantiates the bootstrap and sets it up to call the function handler each time the AWS Lambda function is invoked.  After the set up the bootstrap is started.
-
-The generated function handler is a simple method accepting a string argument that returns the uppercase equivalent of the input string. Replace the body of this method, and parameters, to suit your needs. 
-
 ## Here are some steps to follow from Visual Studio:
 
-(Deploying and invoking custom runtime functions is not yet available in Visual Studio)
+To deploy your Serverless application, right click the project in Solution Explorer and select *Publish to AWS Lambda*.
+
+To view your deployed application open the Stack View window by double-clicking the stack name shown beneath the AWS CloudFormation node in the AWS Explorer tree. The Stack View also displays the root URL to your published application.
 
 ## Here are some steps to follow to get started from the command line:
 
-Once you have edited your template and code you can deploy your application using the [Amazon.Lambda.Tools Global Tool](https://github.com/aws/aws-extensions-for-dotnet-cli#aws-lambda-amazonlambdatools) from the command line.  Version 3.1.4
-or later is required to deploy this project.
+Once you have edited your template and code you can deploy your application using the [Amazon.Lambda.Tools Global Tool](https://github.com/aws/aws-extensions-for-dotnet-cli#aws-lambda-amazonlambdatools) from the command line.
 
 Install Amazon.Lambda.Tools Global Tools if not already installed.
 ```
@@ -31,49 +58,12 @@ If already installed check if new version is available.
 
 Execute unit tests
 ```
-    cd "lup.switch/test/lup.switch.Tests"
+    cd "Desktop/test/Desktop.Tests"
     dotnet test
 ```
 
-Deploy function to AWS Lambda
+Deploy application
 ```
-    cd "lup.switch/src/lup.switch"
-    dotnet lambda deploy-function
-```
-
-
-## Improve Cold Start
-
-.NET Core 3.1 and newer has a feature called ReadyToRun. When you compile your .NET Core application you can enable ReadyToRun 
-to prejit the .NET assemblies. This saves the .NET Core runtime from doing a lot of work during startup converting the 
-assemblies to a native format. ReadyToRun must be used on the same platform as the platform that will run the .NET application. In Lambda's case
-that means you have to build the Lambda package bundle in a Linux environment. To enable ReadyToRun edit the aws-lambda-tools-defaults.json
-file to add /p:PublishReadyToRun=true to the msbuild-parameters parameter.
-
-
-## Using AWS .NET Mock Lambda Test Tool
-
-The AWS .NET Mock Lambda Test Tool can be used with .NET Lambda custom runtimes. When the test tool is used for custom runtime the project
-is executed similar to a Lambda managed runtime and the main method is not called. The test tool uses the `function-handler` field in
-the `aws-lambda-tools-defaults.json` file to figure out what code to call when executing a function in it.
-
-To configure the test tool for custom runtimes follow these steps:
-
-* Ensure the `function-handler` is set in the `aws-lambda-tools-defaults.json` for the method to call.
-* There is a JSON serializer registered for test tool to using the `LambdaSerializer` assembly attribute.
-  * `[assembly: LambdaSerializer(typeof(Amazon.Lambda.Serialization.SystemTextJson.DefaultLambdaJsonSerializer))]`
-* Ensure the test tool is installed from NuGet. Below is an example for installing the .NET 5.0 version.
-  * `dotnet tool install -g Amazon.Lambda.TestTool-5.0` or to update `dotnet tool update -g Amazon.Lambda.TestTool-5.0`
-* For Visual Studio edit or add the `Properties\launchSettings.json` to register the test tool as a debug target.
-```json
-{
-  "profiles": {
-    "Mock Lambda Test Tool": {
-      "commandName": "Executable",
-      "commandLineArgs": "--port 5050",
-      "workingDirectory": ".\\bin\\$(Configuration)\\net5.0",
-      "executablePath": "%USERPROFILE%\\.dotnet\\tools\\dotnet-lambda-test-tool-5.0.exe"
-    }
-  }
-}
+    cd "Desktop/src/Desktop"
+    dotnet lambda deploy-serverless
 ```
