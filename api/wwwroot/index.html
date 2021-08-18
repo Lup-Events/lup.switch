@@ -23,10 +23,10 @@
     <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav">
             <li class="nav-item active">
-                <a class="nav-link" href="#">Activate</a>
+                <a class="nav-link" href="#" onClick="swapActivate();" id="swapActivate">Activate</a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="#">Deactivate</a>
+                <a class="nav-link" href="#" onClick="swapDeactivate();" id="swapDeactivate">Deactivate</a>
             </li>
         </ul>
     </div>
@@ -34,6 +34,7 @@
 
 
 <div class="container">
+    <h1 id="title"></h1>
     <form>
         <div class="input-group mb-3">
             <button class="btn btn-outline-secondary" type="button" id="scan" title="Scan QR with camera"><i class="bi bi-upc-scan"></i></button>

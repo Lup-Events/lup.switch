@@ -1,5 +1,9 @@
 var serialInput = $("#serial");
 var output = $("#output");
+let targetStatus="";
+
+swapActivate();
+
 serialInput.focus(function() {
     var $this = $(this);
     $this.select();
@@ -12,6 +16,28 @@ serialInput.focus(function() {
     });
 });
 serialInput.focus();
+
+function swapActivate(){
+    targetStatus="active";
+
+    $("#title").text("Activate SIM");
+    
+    $("#swapActivate").removeClass("active");
+    $("#swapDeactivate").removeClass("active");
+    
+    $("#swapActivate").addClass("active");
+}
+
+function swapDeactivate(){
+    targetStatus="inactive";
+
+    $("#title").text("Deactivate SIM");
+    
+    $("#swapActivate").removeClass("active");
+    $("#swapDeactivate").removeClass("active");
+
+    $("#swapDeactivate").addClass("active");
+}
 
 function onSerialSubmit(){
     // Get and clean input
@@ -27,7 +53,6 @@ function onSerialSubmit(){
 }
 
 function add(serial){
-    
     var th = $("<th/>");
     th.text(serial);
     
@@ -41,6 +66,7 @@ function add(serial){
     
     output.prepend(row);
 
+    var localTargetStatus=targetStatus;
     fetch('/api/Sim/' + serial,
         {
             method: "PUT",
@@ -49,17 +75,17 @@ function add(serial){
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({ // TODO: serialize needed here?
-                status: "active"
+                status: localTargetStatus
             })
         })
         .then(
             function(response) {
                 switch(response.status){
                     case 200:
-                        td.html("<i class=\"bi bi-check-circle-fill text-success\"></i> Success");
+                        td.html("<i class=\"bi bi-check-circle-fill text-success\"></i> Success - SIM now "+localTargetStatus);
                         break;
                     case 202:
-                        td.html("<i class=\"bi bi-check-circle-fill text-success\"></i> No change needed");
+                        td.html("<i class=\"bi bi-check-circle-fill text-success\"></i> No change, already "+localTargetStatus);
                         break;
                     case 404:
                         td.html("<i class=\"bi bi-exclamation-circle-fill text-danger\"></i> SIM not found");
