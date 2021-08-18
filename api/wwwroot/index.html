@@ -4,12 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Lüp Switch</title><!-- CSS only -->
+    
+    <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"
             integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    
+    <!-- Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet"
           integrity="sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We" crossorigin="anonymous" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css" />
-    <link href="style.css" rel="stylesheet" />
+    
+    <!-- QR Reader -->
+    <link href="/lib/qrcode-reader/dist/css/qrcode-reader.min.css" rel="stylesheet" />
+    <script src="/lib/qrcode-reader/dist/js/qrcode-reader.min.js"></script>
+    
+    <link href="/style.css" rel="stylesheet" />
 </head>
 <body>
 <nav class="navbar navbar-expand-lg navbar-light bg-light">
@@ -37,8 +46,8 @@
     <h1 id="title"></h1>
     <form>
         <div class="input-group mb-3">
-            <button class="btn btn-outline-secondary" type="button" id="scan" title="Scan QR with camera"><i class="bi bi-upc-scan"></i></button>
-            <input type="text" class="form-control" placeholder="enter serial" id="serial" value="F4GWK8RZJC6J"><!--DMPW97XBJF8J  F4GWK8RZJC6J -->
+            <button class="btn btn-outline-secondary" type="button" title="Scan QR with camera" id="qr-reader"><i class="bi bi-upc-scan"></i></button>
+            <input type="text" class="form-control" placeholder="enter serial" id="serial"><!--DMPW97XBJF8J  F4GWK8RZJC6J -->
             <button class="btn btn-primary" type="submit" id="submit" title="Go!" onClick="onSerialSubmit()"><i class="bi bi-play"></i></button>
         </div>
     </form>

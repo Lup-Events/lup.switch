@@ -17,6 +17,18 @@ serialInput.focus(function() {
 });
 serialInput.focus();
 
+$.qrCodeReader.jsQRpath = "/lib/qrcode-reader/dist/js/jsQR/jsQR.js";
+$.qrCodeReader.beepPath = "/lib/qrcode-reader/dist/audio/beep.mp3";
+$("#qr-reader").qrCodeReader({
+    multiple: true,
+    skipDuplicates: true,
+    callback: function(codes) {
+        for(var x in codes){
+            add(codes[x]);
+        }
+    }
+});
+
 function swapActivate(){
     targetStatus="active";
 
@@ -40,10 +52,7 @@ function swapDeactivate(){
 }
 
 function onSerialSubmit(){
-    // Get and clean input
     var serial = serialInput.val().trim().toUpperCase();
-    
-    // TODO: reject if not 12 characters
     
     if(serial === ""){
         return;
@@ -53,6 +62,9 @@ function onSerialSubmit(){
 }
 
 function add(serial){
+    // Get and clean input
+    var serial = serial.trim().toUpperCase();
+    
     var th = $("<th/>");
     th.text(serial);
     
