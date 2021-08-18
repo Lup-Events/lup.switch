@@ -14,6 +14,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Twilio;
 
 namespace Lup.Switch
 {
@@ -28,8 +29,12 @@ namespace Lup.Switch
 
         public void ConfigureServices(IServiceCollection services)
         {
-            //services.AddRazorPages();
+            // Start Twilio
+            var twilioUsername = Environment.GetEnvironmentVariable("Switch_Twilio_AccountSid");
+            var twilioPassword = Environment.GetEnvironmentVariable("Switch_Twilio_AuthToken");
+            TwilioClient.Init(twilioUsername, twilioPassword);
 
+            
             services.AddAuthentication(options =>
                 {
                     options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
