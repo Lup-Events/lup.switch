@@ -11,17 +11,17 @@ using Twilio.Rest.Supersim.V1;
 
 namespace Lup.Switch.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("web/[controller]")]
     public class SimController : ControllerBase
     {
-        // GET api/sim
+        // GET web/sim
         [HttpGet]
         public IEnumerable<SimResource> Get()
         {
             return SimResource.Read().ToList();
         }
 
-        // GET api/sim/DMPW97XBJF8J
+        // GET web/sim/DMPW97XBJF8J
         [HttpGet("{serial}")]
         public SimResource Get(String serial)
         {
@@ -33,14 +33,14 @@ namespace Lup.Switch.Controllers
         }
 
         /*
-        // POST api/values
+        // POST web/values
         [HttpPost]
         public void Post([FromBody]string value)
         {
         }
 */
         
-        // PUT api/sim/DMPW97XBJF8J
+        // PUT web/sim/DMPW97XBJF8J
         [HttpPut("{serial}")]
         public ActionResult<SimResource> Put(String serial, [FromBody]SimModel value)
         {
@@ -69,7 +69,7 @@ namespace Lup.Switch.Controllers
         }
 
         /*
-        // DELETE api/values/5
+        // DELETE web/values/5
         [HttpDelete("{id}")]
         public void Delete(int id)
         {

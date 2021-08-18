@@ -1,3 +1,0 @@
-[submodule "api/wwwroot/lib/qrcode-reader"]
-	path = api/wwwroot/lib/qrcode-reader
-	url = https://github.com/mauntrelio/qrcode-reader.git

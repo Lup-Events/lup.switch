@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 #
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "device-diag", "device-diag\device-diag.csproj", "{75EF90C7-9710-4F38-A946-33EF827A848F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "api", "api\api.csproj", "{969F0683-28AD-4FE2-B035-FCBA757C27A9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "web", "web\web.csproj", "{969F0683-28AD-4FE2-B035-FCBA757C27A9}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "scratch", "scratch\scratch.csproj", "{359C7B43-F7A3-4677-BC0B-5375E04EDB84}"
 EndProject
