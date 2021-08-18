@@ -40,7 +40,7 @@ namespace Lup.Switch.Controllers
         public async Task<IActionResult> SignOut()
         {
             await HttpContext.SignOutAsync();
-            return Ok();
+            return Ok("Signout completed.");
         }
     }
 }
