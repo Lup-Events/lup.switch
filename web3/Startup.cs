@@ -13,6 +13,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Twilio;
 
 namespace web3
 {
@@ -28,6 +29,11 @@ namespace web3
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            // Start Twilio
+            var twilioUsername = Environment.GetEnvironmentVariable("Switch_Twilio_AccountSid");
+            var twilioPassword = Environment.GetEnvironmentVariable("Switch_Twilio_AuthToken");
+            TwilioClient.Init(twilioUsername, twilioPassword);
+            
             services.AddAuthentication(options =>
                 {
                     options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;

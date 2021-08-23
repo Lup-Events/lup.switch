@@ -54,7 +54,7 @@ namespace Lup.Switch.Controllers
             var sim = sims.FirstOrDefault(a => a.UniqueName == serial);
             if (null == sim)
             {
-                return NotFound();
+                return Conflict();
             }
 
             if (sim.Status.ToString() == value.Status)

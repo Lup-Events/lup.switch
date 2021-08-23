@@ -12,6 +12,6 @@
     <PackageReference Include="Twilio" Version="5.65.0" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="wwwroot\images\" />
+    <Folder Include="wwwroot\img\" />
   </ItemGroup>
 </Project>
