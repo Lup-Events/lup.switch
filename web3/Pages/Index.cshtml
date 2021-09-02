@@ -5,21 +5,21 @@
 }
 
 <div class="container">
-    <div class="btn-group">
-        <a class="btn active" href="#" id="swapActivate">Activate</a>
-        <a class="btn" href="#" id="swapDeactivate">Deactivate</a>
+    <div class="btn-group" role="group">
+        <button type="button" class="btn btn-default" id="swapActivate">Activate</button>
+        <button type="button" class="btn btn-default" id="swapDeactivate">Deactivate</button>
     </div>
-    
+
     <h1 id="title"></h1>
-    <form id="form">
-        <div class="input-group mb-3">
-            <button class="btn btn-outline-secondary" type="button" title="Scan QR with camera" id="qr-reader">
-                <i class="bi bi-upc-scan"></i>
-            </button>
+    <form id="form" autocomplete="off">
+        <div class="input-group">
+            <span class="input-group-btn">
+                <button class="btn btn-default" type="button"title="Scan QR with camera" id="qr-reader"><i class="bi bi-upc-scan"></i></button>
+            </span>
             <input type="text" class="form-control" placeholder="enter serial" id="serial"><!--DMPW97XBJF8J  F4GWK8RZJC6J -->
-            <button class="btn btn-primary" type="submit" id="submit" title="Go!">
-                <i class="bi bi-play"></i>
-            </button>
+            <span class="input-group-btn">
+                <button class="btn btn-default" type="button"><i class="bi bi-play"></i></button>
+            </span>
         </div>
     </form>
 
@@ -38,8 +38,7 @@
 <script>
 let targetStatus = "";
 
-var serialInput = $("#serial");
-serialInput.focus(function() {
+$("#serial").focus(function() {
     var $this = $(this);
     $this.select();
 
@@ -50,7 +49,7 @@ serialInput.focus(function() {
         return false;
     });
 });
-serialInput.focus();
+$("#serial").focus();
 
 $.qrCodeReader.jsQRpath = "/lib/qrcode-reader/dist/js/jsQR/jsQR.js";
 $.qrCodeReader.beepPath = "/lib/qrcode-reader/dist/audio/beep.mp3";
@@ -59,7 +58,7 @@ $("#qr-reader").qrCodeReader({
     skipDuplicates: true,
     callback: function(codes) {
         for(var x in codes){
-            add(codes[x]);
+            go(codes[x]);
         }
     }
 });
@@ -73,6 +72,8 @@ $("#swapActivate").click(function(){
     $("#swapDeactivate").removeClass("active");
     
     $("#swapActivate").addClass("active");
+    
+$("#serial").focus();
 });
 $("#swapActivate").click();
 
@@ -85,11 +86,13 @@ $("#swapDeactivate").click(function(){
     $("#swapDeactivate").removeClass("active");
 
     $("#swapDeactivate").addClass("active");
+    
+$("#serial").focus();
 });
 
 $("#form").submit(function(e){
     // Get serial from input and clean it
-    var serial = serialInput.val().trim().toUpperCase();
+    var serial = $("#serial").val().trim().toUpperCase();
     
     // If it's blank, do nothing
     if(serial === ""){
@@ -98,7 +101,7 @@ $("#form").submit(function(e){
     }
     
     // Otherwise clean the input and process the serial
-    serialInput.val("");
+    $("#serial").val("");
     go(serial);
     
     e.preventDefault();
