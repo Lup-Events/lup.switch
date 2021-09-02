@@ -14,8 +14,10 @@ namespace Lup.Switch.Controllers
         [Route("google-login")]
         public IActionResult GoogleLogin()
         {
-            var properties = new AuthenticationProperties { RedirectUri = Url.Action("GoogleResponse") };
-            return Challenge(properties, GoogleDefaults.AuthenticationScheme);
+            return Challenge(new AuthenticationProperties
+            {
+                RedirectUri = Url.Action("GoogleResponse")
+            }, GoogleDefaults.AuthenticationScheme);
         }
  
         [Route("google-response")]
@@ -23,15 +25,18 @@ namespace Lup.Switch.Controllers
         {
             var result = await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             
+            /*
             var claims = result.Principal.Identities
-                .FirstOrDefault().Claims.Select(claim => new
+                .FirstOrDefault().Claims
+                .Select(claim => new
                 {
                     claim.Issuer,
                     claim.OriginalIssuer,
                     claim.Type,
                     claim.Value
                 });
- 
+ */
+            
             return Redirect("/");
         }
 

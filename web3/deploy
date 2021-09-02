@@ -1,1 +1,0 @@
-dotnet lambda deploy-serverless --stack-name Switch-Web --s3-bucket lupswitch

@@ -1,10 +1,24 @@
 # ASP.NET Core Web API Serverless Application
 
-This project shows how to run an ASP.NET Core Web API project as an AWS Lambda exposed through Amazon API Gateway. The NuGet package [Amazon.Lambda.AspNetCoreServer](https://www.nuget.org/packages/Amazon.Lambda.AspNetCoreServer) contains a Lambda function that is used to translate requests from API Gateway into the ASP.NET Core framework and then the responses from ASP.NET Core back to API Gateway.
-
+This project shows how to run an ASP.NET Core Web Application as a serverless application. The NuGet package [Amazon.Lambda.AspNetCoreServer](https://www.nuget.org/packages/Amazon.Lambda.AspNetCoreServer) contains a Lambda function that is used to translate requests from API Gateway into the ASP.NET Core framework and then the responses from ASP.NET Core back to API Gateway.
 
 For more information about how the Amazon.Lambda.AspNetCoreServer package works and how to extend its behavior view its [README](https://github.com/aws/aws-lambda-dotnet/blob/master/Libraries/src/Amazon.Lambda.AspNetCoreServer/README.md) file in GitHub.
 
+### Adding AWS SDK for .NET ###
+
+To integrate the AWS SDK for .NET with the dependency injection system built into ASP.NET Core add the NuGet 
+package [AWSSDK.Extensions.NETCore.Setup](https://www.nuget.org/packages/AWSSDK.Extensions.NETCore.Setup/). Then in 
+the `ConfigureServices` method  in `Startup.cs` file register the AWS service with the `IServiceCollection`.
+
+```csharp
+public void ConfigureServices(IServiceCollection services)
+{
+    services.AddMvc();
+
+    // Add S3 to the ASP.NET Core dependency injection framework.
+    services.AddAWSService<Amazon.S3.IAmazonS3>();
+}
+```
 
 ### Configuring for API Gateway HTTP API ###
 
@@ -13,7 +27,6 @@ payload formats. When using the 2.0 format the base class of `LambdaEntryPoint` 
 For the 1.0 payload format the base class is the same as REST API which is `Amazon.Lambda.AspNetCoreServer.APIGatewayProxyFunction`.
 **Note:** when using the `AWS::Serverless::Function` CloudFormation resource with an event type of `HttpApi` the default payload
 format is 2.0 so the base class of `LambdaEntryPoint` must be `Amazon.Lambda.AspNetCoreServer.APIGatewayHttpApiV2ProxyFunction`.
-
 
 ### Configuring for Application Load Balancer ###
 
@@ -31,10 +44,7 @@ Change the base class to **Amazon.Lambda.AspNetCoreServer.ApplicationLoadBalance
 Application Load Balancer.
 * LocalEntryPoint.cs - for local development this contains the executable Main function which bootstraps the ASP.NET Core hosting framework with Kestrel, as for typical ASP.NET Core applications.
 * Startup.cs - usual ASP.NET Core Startup class used to configure the services ASP.NET Core will use.
-* web.config - used for local development.
-* Controllers\ValuesController - example Web API controller
 
-You may also have a test project depending on the options selected.
 
 ## Here are some steps to follow from Visual Studio:
 
@@ -58,12 +68,12 @@ If already installed check if new version is available.
 
 Execute unit tests
 ```
-    cd "Desktop/test/Desktop.Tests"
+    cd "BlueprintBaseName/test/web3.Tests"
     dotnet test
 ```
 
 Deploy application
 ```
-    cd "Desktop/src/Desktop"
+    cd "web3/src/web3"
     dotnet lambda deploy-serverless
 ```

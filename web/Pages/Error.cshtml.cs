@@ -5,7 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
-namespace web3.Pages
+namespace Lup.Switch.Pages
 {
     public class ErrorModel : PageModel
     {

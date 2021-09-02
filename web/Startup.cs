@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Authorization;
@@ -25,15 +24,15 @@ namespace Lup.Switch
             Configuration = configuration;
         }
 
-        public static IConfiguration Configuration { get; private set; }
+        public IConfiguration Configuration { get; }
 
+        // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
             // Start Twilio
             var twilioUsername = Environment.GetEnvironmentVariable("Switch_Twilio_AccountSid");
             var twilioPassword = Environment.GetEnvironmentVariable("Switch_Twilio_AuthToken");
             TwilioClient.Init(twilioUsername, twilioPassword);
-
             
             services.AddAuthentication(options =>
                 {
@@ -49,6 +48,7 @@ namespace Lup.Switch
                     options.ClientSecret = Environment.GetEnvironmentVariable("Switch_Google_ClientSecret");
                 });
             
+              
             // Require authentication by default
             services.AddMvc(o =>
             {
@@ -58,45 +58,36 @@ namespace Lup.Switch
                 o.Filters.Add(new AuthorizeFilter(policy));
             });
             
-            // Static files require authentication
-            services.AddAuthorization(options =>
-            {
-                options.FallbackPolicy = new AuthorizationPolicyBuilder()
-                    .RequireAuthenticatedUser()
-                    .Build();
-            });
-            
             services.AddControllers();
+           services.AddRazorPages();
         }
 
+        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
             }
+            else
+            {
+                app.UseExceptionHandler("/Error");
+                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+                app.UseHsts();
+            }
 
             app.UseHttpsRedirection();
-            app.UseDefaultFiles();
+            app.UseStaticFiles();
 
             app.UseRouting();
 
-            
-            app.UseAuthentication(); // Added with GAuth
+            app.UseAuthentication();
             app.UseAuthorization();
 
-            
-            app.UseStaticFiles();
-            
             app.UseEndpoints(endpoints =>
             {
-                //endpoints.MapRazorPages();
                 endpoints.MapControllers();
-                /*
-                endpoints.MapGet("/", async context =>
-                {
-                    await context.Response.WriteAsync("Welcome to running ASP.NET Core on AWS Lambda");
-                });*/
+                endpoints.MapRazorPages();
             });
         }
     }

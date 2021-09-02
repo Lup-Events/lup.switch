@@ -10,7 +10,7 @@ namespace Lup.Switch
     /// This class extends from APIGatewayProxyFunction which contains the method FunctionHandlerAsync which is the 
     /// actual Lambda function entry point. The Lambda handler field should be set to
     /// 
-    /// Api::Lup.Switch.LambdaEntryPoint::FunctionHandlerAsync
+    /// web::web.LambdaEntryPoint::FunctionHandlerAsync
     /// </summary>
     public class LambdaEntryPoint :
 

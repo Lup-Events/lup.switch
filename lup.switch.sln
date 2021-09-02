@@ -3,13 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 #
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "device-diag", "device-diag\device-diag.csproj", "{75EF90C7-9710-4F38-A946-33EF827A848F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "web", "web\web.csproj", "{969F0683-28AD-4FE2-B035-FCBA757C27A9}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "scratch", "scratch\scratch.csproj", "{359C7B43-F7A3-4677-BC0B-5375E04EDB84}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "common", "common\common.csproj", "{EE119874-5196-4E61-A558-78200667675C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "web3", "web3\web3.csproj", "{A991DE4D-5D51-4FC7-B74C-214353E6EE52}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "web", "web\web.csproj", "{A991DE4D-5D51-4FC7-B74C-214353E6EE52}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "device-setup", "device-setup\device-setup.csproj", "{A826C566-3FE7-4712-9AF8-A5D203CEF2B0}"
 EndProject
@@ -23,10 +21,6 @@ Global
 		{75EF90C7-9710-4F38-A946-33EF827A848F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{75EF90C7-9710-4F38-A946-33EF827A848F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{75EF90C7-9710-4F38-A946-33EF827A848F}.Release|Any CPU.Build.0 = Release|Any CPU
-		{969F0683-28AD-4FE2-B035-FCBA757C27A9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{969F0683-28AD-4FE2-B035-FCBA757C27A9}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{969F0683-28AD-4FE2-B035-FCBA757C27A9}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{969F0683-28AD-4FE2-B035-FCBA757C27A9}.Release|Any CPU.Build.0 = Release|Any CPU
 		{359C7B43-F7A3-4677-BC0B-5375E04EDB84}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{359C7B43-F7A3-4677-BC0B-5375E04EDB84}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{359C7B43-F7A3-4677-BC0B-5375E04EDB84}.Release|Any CPU.ActiveCfg = Release|Any CPU

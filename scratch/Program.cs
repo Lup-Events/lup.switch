@@ -34,7 +34,7 @@ namespace Lup.Switch
             {
                 WriteConsoleStatus($"  {sim.UniqueName}... ");
                  var sim2 = SimResource.Update(
-                    status: SimResource.StatusUpdateEnum.Active,
+                    //status: SimResource.StatusUpdateEnum.Inactive,
                     pathSid: sim.Sid
                 );
                  WriteConsoleSuccess("done.\n");
