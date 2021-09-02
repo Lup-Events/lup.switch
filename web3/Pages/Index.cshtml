@@ -3,39 +3,21 @@
 @{
     ViewData["Title"] = "Home page";
 }
-<nav class="navbar navbar-expand-lg navbar-light bg-light">
-    <a class="navbar-brand" href="#">
-        <img src="img/icon.png" width="30" height="30" class="d-inline-block align-top" alt="">
-        Switch
-    </a>
-    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav">
-            <li class="nav-item active">
-                <a class="nav-link" href="#" onClick="swapActivate();" id="swapActivate">Activate</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="#" onClick="swapDeactivate();" id="swapDeactivate">Deactivate</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="/account/signout">Logout</a>
-            </li>
-        </ul>
-    </div>
-</nav>
-
 
 <div class="container">
+    <div class="btn-group">
+        <a class="btn active" href="#" id="swapActivate">Activate</a>
+        <a class="btn" href="#" id="swapDeactivate">Deactivate</a>
+    </div>
+    
     <h1 id="title"></h1>
-    <form>
+    <form id="form">
         <div class="input-group mb-3">
             <button class="btn btn-outline-secondary" type="button" title="Scan QR with camera" id="qr-reader">
                 <i class="bi bi-upc-scan"></i>
             </button>
             <input type="text" class="form-control" placeholder="enter serial" id="serial"><!--DMPW97XBJF8J  F4GWK8RZJC6J -->
-            <button class="btn btn-primary" type="submit" id="submit" title="Go!" onClick="onSerialSubmit()">
+            <button class="btn btn-primary" type="submit" id="submit" title="Go!">
                 <i class="bi bi-play"></i>
             </button>
         </div>
@@ -54,12 +36,9 @@
 </div>
 
 <script>
+let targetStatus = "";
+
 var serialInput = $("#serial");
-var output = $("#output");
-let targetStatus="";
-
-swapActivate();
-
 serialInput.focus(function() {
     var $this = $(this);
     $this.select();
@@ -85,8 +64,8 @@ $("#qr-reader").qrCodeReader({
     }
 });
 
-function swapActivate(){
-    targetStatus="active";
+$("#swapActivate").click(function(){
+    targetStatus = "active";
 
     $("#title").text("Activate SIM");
     
@@ -94,10 +73,11 @@ function swapActivate(){
     $("#swapDeactivate").removeClass("active");
     
     $("#swapActivate").addClass("active");
-}
+});
+$("#swapActivate").click();
 
-function swapDeactivate(){
-    targetStatus="inactive";
+$("#swapDeactivate").click(function(){
+    targetStatus = "inactive";
 
     $("#title").text("Deactivate SIM");
     
@@ -105,22 +85,27 @@ function swapDeactivate(){
     $("#swapDeactivate").removeClass("active");
 
     $("#swapDeactivate").addClass("active");
-}
+});
 
-function onSerialSubmit(){
+$("#form").submit(function(e){
+    // Get serial from input and clean it
     var serial = serialInput.val().trim().toUpperCase();
     
+    // If it's blank, do nothing
     if(serial === ""){
+        e.preventDefault();
         return;
     }
-    serialInput.val("");
-    add(serial);
-}
-
-function add(serial){
-    // Get and clean input
-    var serial = serial.trim().toUpperCase();
     
+    // Otherwise clean the input and process the serial
+    serialInput.val("");
+    go(serial);
+    
+    e.preventDefault();
+});
+
+function go(serial){
+    // Add a row with a pending status
     var th = $("<th/>");
     th.text(serial);
     
@@ -132,9 +117,9 @@ function add(serial){
     row.append(th);
     row.append(td);
     
-    output.prepend(row);
+    $("#output").prepend(row);
 
-    var localTargetStatus=targetStatus;
+    var localTargetStatus = targetStatus;
     fetch('/api/Sim/' + serial,
         {
             method: "PUT",

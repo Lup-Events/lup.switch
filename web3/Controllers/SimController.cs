@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Twilio;
 using Twilio.Rest.Supersim.V1;
+using Twilio.TwiML.Voice;
 
 namespace Lup.Switch.Controllers
 {
@@ -23,13 +24,22 @@ namespace Lup.Switch.Controllers
 
         // GET api/sim/DMPW97XBJF8J
         [HttpGet("{serial}")]
-        public SimResource Get(String serial)
+        public ActionResult<SimResource> Get(String serial)
         {
-            return SimResource.Update(
-                pathSid: null,
-                uniqueName:serial,
-                status: null
-            );
+            if (String.IsNullOrEmpty(serial))
+            {
+                return ValidationProblem("Missing serial.");
+            }
+            
+            var sims = SimResource.Read().ToList(); // TODO: Consider how to not get a list of all SIMs for every request
+
+            var sim = sims.FirstOrDefault(a => a.UniqueName == serial);
+            if (null == sim)
+            {
+                return Conflict();
+            }
+
+            return sim;
         }
 
         /*
@@ -44,6 +54,10 @@ namespace Lup.Switch.Controllers
         [HttpPut("{serial}")]
         public ActionResult<SimResource> Put(String serial, [FromBody]SimModel value)
         {
+            if (String.IsNullOrEmpty(serial))
+            {
+                return ValidationProblem("Missing serial.");
+            }
             if (null == value)
             {
                 return ValidationProblem("Missing request model.");
