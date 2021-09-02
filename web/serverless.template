@@ -1,7 +1,7 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
   "Transform": "AWS::Serverless-2016-10-31",
-  "Description": "An AWS Serverless Application that uses the ASP.NET Core framework running in Amazon Lambda.",
+  "Description": "Lup web-based tool for allowing easy activating and deactivating of SIMs.",
   "Parameters": {},
   "Conditions": {},
   "Resources": {
@@ -17,7 +17,7 @@
     "AspNetCoreFunction": {
       "Type": "AWS::Serverless::Function",
       "Properties": {
-        "Handler": "web3::Lup.Switch.LambdaEntryPoint::FunctionHandlerAsync",
+        "Handler": "web::Lup.Switch.LambdaEntryPoint::FunctionHandlerAsync",
         "Runtime": "dotnetcore3.1",
         "CodeUri": "",
         "MemorySize": 512,
