@@ -1,0 +1,3 @@
+[submodule "web/wwwroot/lib/--force"]
+	path = web/wwwroot/lib/--force
+	url = https://github.com/mauntrelio/qrcode-reader.git
