@@ -1,14 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
-using System.Threading.Tasks;
 using Lup.Switch.Models;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Twilio;
 using Twilio.Rest.Supersim.V1;
-using Twilio.TwiML.Voice;
+using Lup.Switch.Handlers;
 
 namespace Lup.Switch.Controllers
 {
@@ -30,10 +26,8 @@ namespace Lup.Switch.Controllers
             {
                 return ValidationProblem("Missing serial.");
             }
-            
-            var sims = SimResource.Read().ToList(); // TODO: Consider how to not get a list of all SIMs for every request
 
-            var sim = sims.FirstOrDefault(a => a.UniqueName == serial);
+            var sim = SimHandler.GetByName(serial);
             if (null == sim)
             {
                 return Conflict();
@@ -63,9 +57,7 @@ namespace Lup.Switch.Controllers
                 return ValidationProblem("Missing request model.");
             }
             
-            var sims = SimResource.Read().ToList();
-
-            var sim = sims.FirstOrDefault(a => a.UniqueName == serial);
+            var sim = SimHandler.GetByName(serial);
             if (null == sim)
             {
                 return Conflict();
@@ -75,11 +67,8 @@ namespace Lup.Switch.Controllers
             {
                 return Accepted();
             }
-            
-            return SimResource.Update(
-                pathSid: sim.Sid,
-                status: value.Status
-            );
+
+            return SimHandler.UpdateStatus(sim.Sid, value.Status);
         }
 
         /*
