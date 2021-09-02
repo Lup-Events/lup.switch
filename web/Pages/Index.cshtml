@@ -3,32 +3,38 @@
 @{
     ViewData["Title"] = "Home page";
 }
-
-<div class="container">
+<div class="page-header">
     <h1 id="title"></h1>
-    <form id="form" autocomplete="off">
+</div>
+
+<form id="form" autocomplete="off">
+    <div class="form-group">
         <div class="input-group">
             <span class="input-group-btn">
-                <button class="btn btn-default" type="button"title="Scan QR with camera" id="qr-reader"><i class="bi bi-upc-scan"></i></button>
+                <button class="btn btn-default" type="button"title="Scan QR with camera" id="qr-reader">
+                    <i class="bi bi-upc-scan"></i>
+                </button>
             </span>
-            <input type="text" class="form-control" placeholder="enter serial" id="serial"><!--DMPW97XBJF8J  F4GWK8RZJC6J -->
+            <input type="text" class="form-control" placeholder="enter device serial" id="serial"><!--DMPW97XBJF8J  F4GWK8RZJC6J -->
             <span class="input-group-btn">
-                <button class="btn btn-default" type="button"><i class="bi bi-play"></i></button>
+                <button class="btn btn-primary" type="button">
+                    <i class="bi bi-play"></i>
+                </button>
             </span>
         </div>
-    </form>
+    </div>
+</form>
 
-    <table class="table">
-        <thead>
-        <tr>
-            <th scope="col" width="50">Serial</th>
-            <th scope="col">Status</th>
-        </tr>
-        </thead>
-        <tbody id="output">
-        </tbody>
-    </table>
-</div>
+<table class="table">
+    <thead>
+    <tr>
+        <th scope="col" width="50">Serial</th>
+        <th scope="col">Status</th>
+    </tr>
+    </thead>
+    <tbody id="output">
+    </tbody>
+</table>
 
 <script>
 let targetStatus = "";
