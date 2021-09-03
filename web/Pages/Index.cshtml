@@ -11,13 +11,13 @@
     <div class="form-group">
         <div class="input-group">
             <span class="input-group-btn">
-                <button class="btn btn-default" type="button"title="Scan QR with camera" id="qr-reader">
+                <button class="btn btn-default" type="button" title="Scan QR with camera" id="qr-reader">
                     <i class="bi bi-upc-scan"></i>
                 </button>
             </span>
             <input type="text" class="form-control" placeholder="enter device serial" id="serial"><!--DMPW97XBJF8J  F4GWK8RZJC6J -->
             <span class="input-group-btn">
-                <button class="btn btn-primary" type="button">
+                <button class="btn btn-primary" type="submit">
                     <i class="bi bi-play"></i>
                 </button>
             </span>
@@ -51,6 +51,13 @@ $("#serial").focus(function() {
     });
 });
 $("#serial").focus();
+$("#serial").keyup(function (){
+   var val = $("#serial").val();
+   
+   if (val.length === 12){
+       $("#form").submit();
+   }
+});
 
 $.qrCodeReader.jsQRpath = "/lib/qrcode-reader/dist/js/jsQR/jsQR.js";
 $.qrCodeReader.beepPath = "/lib/qrcode-reader/dist/audio/beep.mp3";

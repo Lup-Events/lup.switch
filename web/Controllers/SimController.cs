@@ -5,6 +5,7 @@ using Lup.Switch.Models;
 using Microsoft.AspNetCore.Mvc;
 using Twilio.Rest.Supersim.V1;
 using Lup.Switch.Handlers;
+using Twilio.Exceptions;
 
 namespace Lup.Switch.Controllers
 {
@@ -68,7 +69,13 @@ namespace Lup.Switch.Controllers
                 return Accepted();
             }
 
-            return SimHandler.UpdateStatus(sim.Sid, value.Status);
+            try
+            {
+                sim = SimHandler.UpdateStatus(sim.Sid, value.Status);
+            }catch(ApiException ex){
+                return Problem(ex.Message);
+            }
+            return sim;
         }
 
         /*
