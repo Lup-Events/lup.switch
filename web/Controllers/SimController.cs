@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Twilio.Rest.Supersim.V1;
 using Lup.Switch.Handlers;
 using Twilio.Exceptions;
+using Twilio.Rest.Verify.V2.Service;
 
 namespace Lup.Switch.Controllers
 {
@@ -71,6 +72,14 @@ namespace Lup.Switch.Controllers
 
             try
             {
+                // A "ready" SIM can't transition directly to "inactive", it must be "active" first
+                if (sim.Status == SimResource.StatusEnum.Ready 
+                    && value.Status.ToUpperInvariant() == "INACTIVE")
+                {
+                    sim = SimHandler.UpdateStatus(sim.Sid, SimResource.StatusUpdateEnum.Active);
+                }
+                
+                // Update status
                 sim = SimHandler.UpdateStatus(sim.Sid, value.Status);
             }catch(ApiException ex){
                 return Problem(ex.Message);
