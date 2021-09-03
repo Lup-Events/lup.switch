@@ -55,7 +55,7 @@ $("#serial").keyup(function (){
    var val = $("#serial").val();
    
    if (val.length === 12){
-       $("#form").submit();
+       submit();
    }
 });
 
@@ -98,7 +98,7 @@ $("#swapDeactivate").click(function(){
 $("#serial").focus();
 });
 
-$("#form").submit(function(e){
+function submit(e){
     // Get serial from input and clean it
     var serial = $("#serial").val().trim().toUpperCase();
     
@@ -112,8 +112,11 @@ $("#form").submit(function(e){
     $("#serial").val("");
     go(serial);
     
-    e.preventDefault();
-});
+    // If triggered as part of a form submittion, abort it
+    e && e.preventDefault();
+}
+
+$("#form").submit(submit);
 
 function go(serial){
     // Add a row with a pending status
